@@ -1,0 +1,118 @@
+# Rust
+# Archivos generados por Cargo
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# Archivos de dependencias compiladas
+*.rlib
+*.rmeta
+*.dylib
+*.so
+*.dll
+*.a
+*.lib
+
+# Archivos de documentación
+/target/doc/
+
+# Archivos de pruebas de rendimiento
+*.prof
+*.profraw
+*.profdata
+
+# Archivos de cobertura de código
+*.gcda
+*.gcno
+*.gcov
+*.lcov
+*.lcov.info
+
+# Archivos de depuración
+*.dSYM/
+*.pdb
+
+# IDEs y editores
+# IntelliJ IDEA / CLion
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+*.un~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Atom
+.atom/
+*.atom
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Sistemas operativos
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Archivos de logs
+*.log
+
+# Archivos de entorno
+.env
+.env.*
+!.env.example
+
+# Archivos binarios adicionales
+*.exe
+*.exe~
+*.out
+*.o
+*.obj
+*.pdb
+
+# Archivos de pruebas
+*.test
+*.bench
+
+# Archivos de caché
+.cargo/
+.cache/
+
+# RustRover
+.idea/
+*.iml
+
+# Archivos temporales de Rust
+*.tmp
+*.temp
