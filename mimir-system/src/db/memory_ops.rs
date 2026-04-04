@@ -58,4 +58,5 @@ pub fn search_memories(
 
     Ok(memories)
 }
+pub fn search_memory_by_id() -> Result<string> {}
 pub fn kill_memory(conn: &Connection, memory: &Memory) -> Result<string> {}

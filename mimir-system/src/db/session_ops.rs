@@ -3,17 +3,17 @@ use rusqlite::{Connection, Result, params};
 //Consultas sql para la sessiones
 const CREATE_SESION: &str = "";
 const GET_SESSION: &str = "";
-const KILL_SESSION: &str
+const KILL_SESSION: &str = "";
 
-fn createSession() -> Result<String> {
+fn create_session() -> Result<String> {
     // Verificar si ya existe una session con ese id
     // Si existe retornar error
     // Crear session
 }
-fn searchAllSession() -> Result<String> {
+fn search_all_Session() -> Result<String> {
     //Existe la session?
 }
-fn searchSessionById() -> Result<String> {}
+fn search_session_by_id() -> Result<String> {}
 fn deleteSessin() -> Result<String> {
     //existe la session?
 }

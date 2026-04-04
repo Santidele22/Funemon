@@ -3,10 +3,9 @@ mod memory_ops;
 mod reflection_ops;
 mod session_ops;
 
-
-fn connection() ->Result<()> {
+fn connection() -> Result<()> {
     let conn = Connection::open("mimir.db")?;
-    
+
     conn.execute(
         "CREATE TABLE IF NOT EXISTS sessions (
             session_id TEXT PRIMARY KEY,
@@ -66,8 +65,8 @@ fn connection() ->Result<()> {
 
     conn.execute(
         "CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
-            INSERT INTO memories_fts(memories_fts, rowid, title, what, why, where_field, learned)
-            VALUES ('delete', OLD.rowid, OLD.title, OLD.what, OLD.why, OLD.where_field, OLD.learned);
+            INSERT INTO memories_fts(memories_fts, rowid)
+            VALUES ('delete', OLD.rowid);
         END",
     )?;
 
@@ -80,5 +79,5 @@ fn connection() ->Result<()> {
         END",
     )?;
 
-    Ok(()) 
+    Ok(())
 }
