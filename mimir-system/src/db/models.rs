@@ -25,7 +25,7 @@ pub enum ReflectionLevel {
     Principle, // level 3: principio general
 }
 #[derive(Serialize, Deserialize, JsonSchema)]
-pub struct Session {
+pub struct Sessions {
     pub session_id: Uuid,
     pub project: String,
     pub created_at: i64,
