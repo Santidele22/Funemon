@@ -4,6 +4,7 @@ use rusqlite::{Connection, Result, params};
 const CREATE_MEMORY: &str = "INSERT INTO memories (title,type,what,where,how,why,learned,deleted_at, created_at  VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)";
 const KILL_MEMORY: &str = "DELETE * FROM memories";
 const SEARCH_MEMORY: &str = "SELECT m.title, m.type, m.what,m.where,m.why,m.learned,m.deleted_at,m.created_at,m.session_id FROM memories m JOIN memories_fts fts ON m.rowid = fts.rowid WHERE memories_fts MATCH ?1";
+const SEARCH_MEMORY_BY_ID: &str = "";
 
 pub fn store_memory(conn: &Connection, memory: &Memory) -> Result<string> {
     conn.execute(CREATE_MEMORY);
@@ -58,5 +59,5 @@ pub fn search_memories(
 
     Ok(memories)
 }
-pub fn search_memory_by_id() -> Result<string> {}
+pub fn search_memory_by_id(conn: &Connection, memory_id: str) -> Result<string> {}
 pub fn kill_memory(conn: &Connection, memory: &Memory) -> Result<string> {}

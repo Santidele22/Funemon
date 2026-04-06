@@ -54,16 +54,13 @@ pub fn start_session(
     project: &str,
     existing_session_id: Option<&str>,
 ) -> Result<String> {
-    // Verificar si ya existe una session con ese id
     if let Some(sid) = existing_session_id {
         let now = unix_timestamp();
-        // Si existe actualizar el last_active y seguir con esa session
         conn.execute(UPDATE_LAST_ACTIVE, params![now, sid])?;
         if let Some(session) = get_session_by(conn, sid)? {
             return OK(session);
         }
     }
-    // sino existe crear session
     let session_uuid = Uuid::new_v4().to_string();
     let now = unix_timestamp();
     conn.execute(
@@ -117,4 +114,21 @@ pub fn cleanup_expired_sessions(
     let affected = conn.execute(CLEANUP_EXPIRED, params![now, project, expire_time])?;
 
     Ok(affected)
+}
+
+pub fn end_session(conn: &Connection, session_id: &str) -> Result<Session> {
+    let now = unix_timestamp();
+    conn.execute(END_SESSION, params![now, session_id])?;
+
+    get_session_by_id(conn, session_id)?.ok_or_else(|| rusqlite::Error::QueryReturnedNoRows)
+}
+
+pub fn delete_session(conn: &Connection, session_id: &str, permanent: bool) -> Result<bool> {
+    let affected = if permanent {
+        conn.execute(HARD_DELETE_SESSION, params![session_id])?
+    } else {
+        let now = unix_timestamp();
+        conn.execute(SOFT_DELETE_SESSION, params![now, session_id])?
+    };
+    Ok(affected > 0)
 }
