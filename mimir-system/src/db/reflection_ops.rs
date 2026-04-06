@@ -1,8 +1,8 @@
 use super::memory_ops::get_session_memories;
 use crate::models::{Memory, Reflection};
 use crate::reflection::call_ollana;
-use rusqlite::{Connection, Result, params};
-
+use rusqlite::{Connection, Error, Result, params};
+use serde_json::Value;
 const CREATE_REFLECTION: &str = "
     INSERT INTO reflections (reflection_id, session_id, content, type, importance, level, source_summary, created_at, deleted_at)
     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)
@@ -191,7 +191,7 @@ pub fn build_prompt(memories: &[Memory]) -> String {
 
 pub fn generate_reflection(conn: &Connection, session_id: &str) -> Result<Reflection> {
     //Buscar memorias en la session
-    let memories = get_memory_by_id(conn, session_id, 100)?;
+    let memories = get_session_memories(conn, session_id)?;
     //Si no hay memorias retornar error o null
     if memorias.is_empty() {
         return Err(RusqliteError::Other(
@@ -199,8 +199,8 @@ pub fn generate_reflection(conn: &Connection, session_id: &str) -> Result<Reflec
         ));
     }
     let prompt = build_prompt(&memories);
-    let llm_response = call_ollana(&prompt);
-    let parsed = parse_response(&llm_response);
+    let llm_response = call_ollana(&prompt)?;
+    let parsed = parse_response(&llm_response)?;
     //guardar en bd
     let reflection_id = uuid::Uuid::new_v4().to_string();
     let now = unix_timestamp();
@@ -231,5 +231,33 @@ pub fn generate_reflection(conn: &Connection, session_id: &str) -> Result<Reflec
         deleted_at: None,
     })
 }
-pub fn get_reflection_by_session() -> String {}
-pub fn kill_reflection() -> String {}
+
+pub fn get_reflection_by_session(
+    conn: &Connection,
+    session_id: &str,
+) -> Result<Option<Reflection>> {
+    let mut stmt = conn.prepare(GET_REFLECTION_BY_SESSION)?;
+    let mut rows = stmt.query(params![session_id])?;
+
+    if let Some(row) = rows.next()? {
+        Ok(Some(Reflection {
+            reflection_id: row.get(0)?,
+            session_id: row.get(1)?,
+            content: row.get(2)?,
+            r#type: row.get(3)?,
+            importance: row.get(4)?,
+            level: row.get(5)?,
+            source_summary: row.get(6)?,
+            created_at: row.get(7)?,
+            deleted_at: row.get(8)?,
+        }))
+    } else {
+        Ok(None)
+    }
+}
+
+pub fn delete_reflection(conn: &Connection, reflection_id: &str) -> Result<bool> {
+    let now = unix_timestamp();
+    let affected = conn.execute(DELETE_REFLECTION, params![now, reflection_id])?;
+    Ok(affected > 0)
+}
