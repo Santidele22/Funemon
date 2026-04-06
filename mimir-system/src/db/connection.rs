@@ -1,9 +1,9 @@
-use rustqlite::{Connection, Result};
+use rusqlite::{Connection, Result};
 mod memory_ops;
 mod reflection_ops;
 mod session_ops;
 
-fn connection() -> Result<()> {
+pub fn connection() -> Result<()> {
     let conn = Connection::open("mimir.db")?;
 
     conn.execute(
@@ -35,7 +35,6 @@ fn connection() -> Result<()> {
 
     conn.execute(
         "CREATE TABLE IF NOT EXISTS reflections (
-            project TEXT NOT NULL,
             reflection_id TEXT PRIMARY KEY,
             session_id TEXT NOT NULL,
             content TEXT NOT NULL,
@@ -44,6 +43,7 @@ fn connection() -> Result<()> {
             level TEXT NOT NULL,
             source_summary TEXT,
             created_at INTEGER NOT NULL,
+            deleted_at INTEGER,
             FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         )",
     )?;
@@ -72,8 +72,8 @@ fn connection() -> Result<()> {
 
     conn.execute(
         "CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
-            INSERT INTO memories_fts(memories_fts, rowid, title, what, why, where_field, learned)
-            VALUES ('delete', OLD.rowid, OLD.title, OLD.what, OLD.why, OLD.where_field, OLD.learned);
+            INSERT INTO memories_fts(memories_fts, rowid)
+            VALUES ('delete', OLD.rowid);
             INSERT INTO memories_fts(rowid, title, what, why, where_field, learned)
             VALUES (NEW.rowid, NEW.title, NEW.what, NEW.why, NEW.where_field, NEW.learned);
         END",
