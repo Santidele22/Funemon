@@ -1,11 +1,6 @@
 use rusqlite::{Connection, Result};
-mod memory_ops;
-mod reflection_ops;
-mod session_ops;
 
-pub fn connection() -> Result<()> {
-    let conn = Connection::open("mimir.db")?;
-
+fn init_database_inner(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS sessions (
             session_id TEXT PRIMARY KEY,
@@ -15,6 +10,7 @@ pub fn connection() -> Result<()> {
             deleted_at INTEGER,
             ended_at INTEGER
         )",
+        (),
     )?;
 
     conn.execute(
@@ -31,6 +27,7 @@ pub fn connection() -> Result<()> {
             deleted_at INTEGER,
             FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         )",
+        (),
     )?;
 
     conn.execute(
@@ -46,6 +43,7 @@ pub fn connection() -> Result<()> {
             deleted_at INTEGER,
             FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         )",
+        (),
     )?;
 
     conn.execute(
@@ -54,6 +52,7 @@ pub fn connection() -> Result<()> {
             content='memories',
             content_rowid='rowid'
         )",
+        (),
     )?;
 
     conn.execute(
@@ -61,6 +60,7 @@ pub fn connection() -> Result<()> {
             INSERT INTO memories_fts(rowid, title, what, why, where_field, learned)
             VALUES (NEW.rowid, NEW.title, NEW.what, NEW.why, NEW.where_field, NEW.learned);
         END",
+        (),
     )?;
 
     conn.execute(
@@ -68,6 +68,7 @@ pub fn connection() -> Result<()> {
             INSERT INTO memories_fts(memories_fts, rowid)
             VALUES ('delete', OLD.rowid);
         END",
+        (),
     )?;
 
     conn.execute(
@@ -77,7 +78,18 @@ pub fn connection() -> Result<()> {
             INSERT INTO memories_fts(rowid, title, what, why, where_field, learned)
             VALUES (NEW.rowid, NEW.title, NEW.what, NEW.why, NEW.where_field, NEW.learned);
         END",
+        (),
     )?;
 
     Ok(())
+}
+
+pub fn init_database() -> Result<()> {
+    let conn = Connection::open("mimir.db")?;
+    init_database_inner(&conn)?;
+    Ok(())
+}
+
+pub fn get_connection() -> Result<Connection> {
+    Connection::open("mimir.db")
 }

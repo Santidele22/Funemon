@@ -1,32 +1,31 @@
 use serde::{Deserialize, Serialize};
 
-use schemars::{JsonSchema, schema_for};
-use uuid::Uuid;
+use schemars::JsonSchema;
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, PartialEq)]
 pub enum MemoryType {
-    observation,
-    error,
-    plan,
-    preferences,
+    OBSERVATION,
+    ERROR,
+    PLAN,
+    PREFERENCES,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, PartialEq)]
 pub enum ReflectionType {
-    pattern,
-    principle,
-    warning,
+    PATTERN,
+    PRINCIPLE,
+    WARNING,
 }
 
 #[derive(Serialize, Deserialize, JsonSchema, Debug, Clone, PartialEq)]
 pub enum ReflectionLevel {
-    Fact,      // level 1: hecho concreto
-    Pattern,   // level 2: patrón recurrente
-    Principle, // level 3: principio general
+    FACT,
+    PATTERN,
+    PRINCIPLE,
 }
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct Sessions {
-    pub session_id: Uuid,
+    pub session_id: String,
     pub project: String,
     pub created_at: i64,
     pub last_active: i64,
@@ -36,9 +35,9 @@ pub struct Sessions {
 
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct Memories {
-    pub memory_id: Uuid,
-    pub session_id: Uuid,
-    pub r#type: Option<MemoryType>,
+    pub memory_id: String,
+    pub session_id: String,
+    pub r#type: Option<String>,
     pub title: String,
     pub what: Option<String>,
     pub where_field: Option<String>,
@@ -50,13 +49,12 @@ pub struct Memories {
 
 #[derive(Serialize, Deserialize, JsonSchema)]
 pub struct Reflection {
-    pub project: String,
-    pub reflection_id: Uuid,
-    pub session_id: Uuid,
+    pub reflection_id: String,
+    pub session_id: String,
     pub content: String,
-    pub r#type: ReflectionType,
+    pub r#type: String,
     pub importance: i32,
-    pub level: ReflectionLevel,
+    pub level: String,
     pub source_summary: Option<String>,
     pub created_at: i64,
 }

@@ -1,4 +1,6 @@
-pub fn call_ollama(prompt: &str) -> Result<String> {
+// src/reflection/llm_client.rs
+
+pub fn call_ollama(prompt: &str) -> Result<String, String> {
     let client = reqwest::blocking::Client::new();
 
     let response = client
@@ -9,18 +11,15 @@ pub fn call_ollama(prompt: &str) -> Result<String> {
             "stream": false
         }))
         .send()
-        .map_err(|e| RusqliteError::Other(format!("Error conectando a Ollama: {}", e)))?;
+        .map_err(|e| format!("Error de red Ollama: {}", e))?;
 
     let json: serde_json::Value = response
         .json()
-        .map_err(|e| RusqliteError::Other(format!("Error parseando respuesta: {}", e)))?;
+        .map_err(|e| format!("Error al leer JSON: {}", e))?;
 
-    let text = json
-        .get("response")
-        .and_then(|v| v.as_str())
-        .ok_or_else(|| {
-            RusqliteError::Other("Respuesta de Ollama sin campo 'response'".to_string())
-        })?;
+    let text = json["response"]
+        .as_str()
+        .ok_or_else(|| "Ollama devolvió un formato inesperado".to_string())?;
 
     Ok(text.to_string())
 }
