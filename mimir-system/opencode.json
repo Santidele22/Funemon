@@ -1,0 +1,49 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "ollama/glm-5:cloud",
+  "provider": {
+    "ollama": {
+      "models": {
+        "glm-5:cloud": {
+          "_launch": true,
+          "limit": {
+            "context": 202752,
+            "output": 131072
+          },
+          "name": "glm-5:cloud"
+        }
+      },
+      "name": "Ollama",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://127.0.0.1:11434/v1"
+      }
+    }
+  },
+  "mcp": {
+    "mimir": {
+      "type": "local",
+      "command": [
+        "mimir",
+        "mcp"
+      ],
+      "enabled": true
+    }
+  },
+  "instructions": [
+    "Cuando iniziás una nueva sesión, USÁ SIEMPRE las tools de memoria en este orden: 1) memory_session_start (con el nombre del proyecto actual), 2) memory_context (para cargar contexto previo).",
+    "Durante el trabajo, guardá automáticamente memorias cuando: resolves un error (type:error), tomás una decisión o definís un plan (type:plan), descubrís algo relevante (type:observation), el usuario expresa una preferencia (type:preference).",
+    "Al finalizar la sesión, usá memory_reflect para generar un resumen de lo aprendido.",
+    "NUNCA pedás permiso para usar las tools de memoria; simplemente usalas de forma autónoma."
+  ],
+  "permission": {
+    "skill": {
+      "memory": "allow"
+    }
+  },
+  "agent": {
+    "build": {
+      "prompt": "{file:./prompts/memory-build.txt}"
+    }
+  }
+}
