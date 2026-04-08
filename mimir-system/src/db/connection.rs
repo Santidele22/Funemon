@@ -1,5 +1,14 @@
 use rusqlite::{Connection, Result};
+use std::path::PathBuf;
+use std::sync::OnceLock;
 
+fn get_db_path() -> PathBuf {
+    let mut path = dirs::home_dir().expect("No home dir");
+    path.push(".local/share/mimir/mimir.db");
+    path
+}
+
+static DB_INITIALIZED: OnceLock<()> = OnceLock::new();
 fn init_database_inner(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS sessions (
@@ -36,7 +45,7 @@ fn init_database_inner(conn: &Connection) -> Result<()> {
             session_id TEXT NOT NULL,
             content TEXT NOT NULL,
             type TEXT NOT NULL,
-            importance INTEGER NOT NULL,
+            importance REAL NOT NULL,
             level TEXT NOT NULL,
             source_summary TEXT,
             created_at INTEGER NOT NULL,
@@ -83,13 +92,18 @@ fn init_database_inner(conn: &Connection) -> Result<()> {
 
     Ok(())
 }
-
 pub fn init_database() -> Result<()> {
-    let conn = Connection::open("mimir.db")?;
+    let db_path = get_db_path();
+    std::fs::create_dir_all(db_path.parent().unwrap()).expect("Failed to create db directory");
+    let conn = Connection::open(&db_path)?;
     init_database_inner(&conn)?;
+    DB_INITIALIZED.set(()).unwrap();
     Ok(())
 }
 
 pub fn get_connection() -> Result<Connection> {
-    Connection::open("mimir.db")
+    if DB_INITIALIZED.get().is_none() {
+        init_database()?;
+    }
+    Connection::open(get_db_path())
 }

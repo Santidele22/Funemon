@@ -6,7 +6,7 @@ use rmcp::{
 };
 use serde::Deserialize;
 
-use crate::db::models::Memories;
+use crate::db::models::{Memories, MemoryType};
 use crate::db::{
     cleanup_expired_sessions, delete_session, generate_reflection, get_connection,
     get_reflection_by_session, get_session_context, list_sessions, search_memories, start_session,
@@ -117,7 +117,13 @@ impl MemoryTools {
                 .unwrap()
                 .as_secs() as i64,
             title: p.title,
-            r#type: p.r#type,
+            r#type: p.r#type.and_then(|t| match t.to_lowercase().as_str() {
+                "observation" => Some(MemoryType::OBSERVATION),
+                "error" => Some(MemoryType::ERROR),
+                "plan" => Some(MemoryType::PLAN),
+                "preference" | "preferences" => Some(MemoryType::PREFERENCES),
+                _ => None,
+            }),
             what: p.what,
             why: p.why,
             where_field: p.where_field,

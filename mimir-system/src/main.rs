@@ -1,16 +1,20 @@
+mod cli;
 mod db;
-use crate::db::models;
 mod mcp;
 mod reflection;
 
-use db::init_database;
+use clap::Parser;
+use cli::{Cli, run_cli};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    init_database()?;
-    println!("✅ Base de datos inicializada");
+    let cli = Cli::parse();
 
-    println!("🚀 Iniciando servidor MCP...");
+    if std::env::args().len() > 1 {
+        return run_cli(cli);
+    }
+
+    db::init_database()?;
     mcp::run_server().await?;
 
     Ok(())
