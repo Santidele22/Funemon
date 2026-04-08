@@ -102,7 +102,10 @@ impl MemoryTools {
 
 #[tool_router]
 impl MemoryTools {
-    #[tool(description = "Guarda una nueva observación (memoria) en la sesión actual")]
+    #[tool(description = "\
+[CORE - PASO 3] Guarda una observación, error, plan o preferencia. \
+Llamar automáticamente cuando ocurre algo significativo durante el trabajo. \
+NO esperar que el usuario lo pida. Tipos: observation | error | plan | preference.")]
     pub async fn memory_store(
         &self,
         Parameters(p): Parameters<MemoryStoreParams>,
@@ -138,8 +141,10 @@ impl MemoryTools {
             serde_json::json!({ "success": true, "memory_id": id }).to_string(),
         )]))
     }
-
-    #[tool(description = "Busca memorias por texto completo")]
+    #[tool(description = "\
+[AVANZADA] Busca memorias por texto en una o todas las sesiones. \
+Usar solo cuando el contexto cargado por memory_context no es suficiente \
+o cuando el usuario pide buscar algo específico en el historial.")]
     pub async fn memory_search(
         &self,
         Parameters(p): Parameters<MemorySearchParams>,
@@ -159,8 +164,10 @@ impl MemoryTools {
             serde_json::json!({ "results": results, "count": count }).to_string(),
         )]))
     }
-
-    #[tool(description = "Inicia una nueva sesión o reanuda una existente")]
+    #[tool(description = "\
+[CORE - PASO 1] Inicia o reanuda una sesión de trabajo. \
+SIEMPRE llamar primero, antes de cualquier otra tool. \
+Retorna session_id necesario para todas las demás operaciones.")]
     pub async fn memory_session_start(
         &self,
         Parameters(p): Parameters<SessionStartParams>,
@@ -181,8 +188,10 @@ impl MemoryTools {
             .to_string(),
         )]))
     }
-
-    #[tool(description = "Lista todas las sesiones de un proyecto")]
+    #[tool(description = "\
+[AVANZADA] Lista todas las sesiones de un proyecto. \
+Usar solo si el usuario pide ver el historial de sesiones \
+o para elegir una sesión a reanudar.")]
     pub async fn memory_list_sessions(
         &self,
         Parameters(p): Parameters<ProjectParams>,
@@ -197,8 +206,10 @@ impl MemoryTools {
             serde_json::json!({ "sessions": sessions, "count": count }).to_string(),
         )]))
     }
-
-    #[tool(description = "Obtiene el contexto reciente de una sesión")]
+    #[tool(description = "\
+[CORE - PASO 2] Carga las memorias recientes de una sesión. \
+Llamar inmediatamente después de session_start para recuperar contexto previo. \
+Si retorna vacío, la sesión es nueva.")]
     pub async fn memory_context(
         &self,
         Parameters(p): Parameters<SessionContextParams>,
@@ -213,8 +224,10 @@ impl MemoryTools {
             serde_json::json!({ "context": memories, "count": count }).to_string(),
         )]))
     }
-
-    #[tool(description = "Genera una reflexión consolidada de una sesión")]
+    #[tool(description = "\
+[CORE - PASO 4] Genera una reflexión consolidada de la sesión actual. \
+Llamar al finalizar la conversación o cuando el usuario indique cierre. \
+Produce un resumen de alto nivel de lo aprendido.")]
     pub async fn memory_reflect(
         &self,
         Parameters(p): Parameters<SessionIdParams>,
@@ -236,8 +249,10 @@ impl MemoryTools {
             .to_string(),
         )]))
     }
-
-    #[tool(description = "Obtiene la reflexión de una sesión")]
+    #[tool(description = "\
+[AVANZADA] Recupera la reflexión ya generada de una sesión específica. \
+Usar solo si el usuario pide ver el resumen de una sesión anterior. \
+Para la sesión actual, usar memory_reflect en su lugar.")]
     pub async fn memory_get_reflection(
         &self,
         Parameters(p): Parameters<SessionIdParams>,
@@ -259,8 +274,10 @@ impl MemoryTools {
             )])),
         }
     }
-
-    #[tool(description = "Elimina una sesión")]
+    #[tool(description = "\
+[AVANZADA] Elimina una sesión. Por defecto soft delete (permanent: false). \
+Usar solo si el usuario pide explícitamente borrar una sesión. \
+Preferir soft delete salvo que se indique lo contrario.")]
     pub async fn memory_delete_session(
         &self,
         Parameters(p): Parameters<DeleteSessionParams>,
@@ -274,8 +291,10 @@ impl MemoryTools {
             serde_json::json!({ "success": deleted, "session_id": p.session_id }).to_string(),
         )]))
     }
-
-    #[tool(description = "Limpia sesiones expiradas de un proyecto")]
+    #[tool(description = "\
+[AVANZADA] Limpia sesiones inactivas por más de N días. \
+Usar solo si el usuario pide mantenimiento o si hay muchas sesiones antiguas. \
+Default: 5 días de inactividad.")]
     pub async fn memory_cleanup(
         &self,
         Parameters(p): Parameters<CleanupParams>,
@@ -302,7 +321,49 @@ impl ServerHandler for MemoryTools {
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation::from_build_env(),
             instructions: Some(
-                "Servidor de memoria persistente para sesiones de trabajo con IA.".to_string(),
+                r#"
+Mimir es un sistema de memoria persistente. Seguís estas reglas de forma autónoma.
+
+## TOOLS DISPONIBLES: DOS TIERS
+
+**Tier 1 — core** (usar en todo flujo normal, en este orden):
+  1. memory_session_start  → siempre primero
+  2. memory_context        → siempre segundo, para cargar contexto
+  3. memory_store          → automáticamente durante el trabajo
+  4. memory_reflect        → siempre al finalizar
+
+**Tier 2 — avanzadas** (solo si hay necesidad explícita):
+  - memory_search          → el usuario pide buscar en historial
+  - memory_get_reflection  → el usuario pide ver resumen de sesión anterior
+  - memory_list_sessions   → el usuario pide ver sus sesiones
+  - memory_delete_session  → el usuario pide borrar una sesión
+  - memory_cleanup         → el usuario pide limpiar sesiones viejas
+
+Regla: si podés resolver algo con tier 1, no uses tier 2.
+
+## FLUJO OBLIGATORIO
+
+Al iniciar:
+  → memory_session_start(project) → memory_context(session_id)
+
+Durante el trabajo, guardar automáticamente cuando:
+  - Se resuelve un error                      → type: "error"
+  - Se toma una decisión o se define un plan  → type: "plan"
+  - Se descubre algo relevante                → type: "observation"
+  - El usuario expresa una preferencia        → type: "preference"
+
+Al finalizar:
+  → memory_reflect(session_id)
+
+## REGLAS DE COMPORTAMIENTO
+
+- Nunca pedís permiso para usar tools de memoria; simplemente las usás.
+- Si memory_context retorna vacío, informás al usuario que es sesión nueva.
+- Si memory_context retorna contexto, lo usás para responder con continuidad.
+- No usás memory_search como sustituto de memory_context para el inicio.
+        "#
+                .trim()
+                .to_string(),
             ),
         }
     }
