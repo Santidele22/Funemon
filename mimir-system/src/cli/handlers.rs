@@ -1,5 +1,6 @@
 use crate::cli::commands::{Cli, Commands, MemoryCommands, ReflectionCommands, SessionCommands};
 use crate::db::models::{Memories, MemoryType};
+use rusqlite::Row;
 use crate::db::{
     cleanup_expired_sessions, delete_memory, delete_reflection, delete_session,
     generate_reflection, get_connection, get_reflection_by_session, get_session_context,
@@ -9,8 +10,6 @@ use crate::db::{
 pub async fn run_cli(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
     match cli.command {
         Some(Commands::Mcp) => {
-            init_database()?;
-            eprintln!("Mimir MCP server starting");
             crate::mcp::run_server().await?;
         }
         Some(Commands::Init) => {
@@ -24,26 +23,24 @@ pub async fn run_cli(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
 
         Some(Commands::Stats) => {
             let conn = get_connection()?;
+            let conn = conn.lock().unwrap();
 
-            // Contar sesiones
             let session_count: i64 = conn.query_row(
                 "SELECT COUNT(*) FROM sessions WHERE deleted_at IS NULL",
                 [],
-                |row| row.get(0),
+                |row: &rusqlite::Row| row.get(0),
             )?;
 
-            // Contar memorias
             let memory_count: i64 = conn.query_row(
                 "SELECT COUNT(*) FROM memories WHERE deleted_at IS NULL",
                 [],
-                |row| row.get(0),
+                |row: &rusqlite::Row| row.get(0),
             )?;
 
-            // Contar reflexiones
             let reflection_count: i64 = conn.query_row(
                 "SELECT COUNT(*) FROM reflections WHERE deleted_at IS NULL",
                 [],
-                |row| row.get(0),
+                |row: &rusqlite::Row| row.get(0),
             )?;
 
             println!("📊 Estadísticas de Mimir:");
@@ -292,10 +289,7 @@ fn handle_reflection_command(cmd: ReflectionCommands) -> Result<(), Box<dyn std:
 }
 
 fn timestamp_to_string(timestamp: i64) -> String {
-    use chrono::{DateTime, NaiveDateTime, Utc};
-    let datetime = DateTime::<Utc>::from_utc(
-        NaiveDateTime::from_timestamp_opt(timestamp, 0).unwrap(),
-        Utc,
-    );
+    use chrono::{DateTime, Utc};
+    let datetime = DateTime::from_timestamp(timestamp, 0).unwrap();
     datetime.format("%Y-%m-%d %H:%M:%S").to_string()
 }

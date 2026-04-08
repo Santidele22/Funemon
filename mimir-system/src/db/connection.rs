@@ -1,6 +1,8 @@
 use rusqlite::{Connection, Result};
 use std::path::PathBuf;
-use std::sync::OnceLock;
+use std::sync::{Arc, Mutex, OnceLock};
+
+static DB_CONNECTION: OnceLock<Arc<Mutex<Connection>>> = OnceLock::new();
 
 fn get_db_path() -> PathBuf {
     let mut path = dirs::home_dir().expect("No home dir");
@@ -8,7 +10,6 @@ fn get_db_path() -> PathBuf {
     path
 }
 
-static DB_INITIALIZED: OnceLock<()> = OnceLock::new();
 fn init_database_inner(conn: &Connection) -> Result<()> {
     conn.execute(
         "CREATE TABLE IF NOT EXISTS sessions (
@@ -92,18 +93,34 @@ fn init_database_inner(conn: &Connection) -> Result<()> {
 
     Ok(())
 }
+
 pub fn init_database() -> Result<()> {
     let db_path = get_db_path();
     std::fs::create_dir_all(db_path.parent().unwrap()).expect("Failed to create db directory");
+
     let conn = Connection::open(&db_path)?;
+
+    // Configuración óptima para SQLite
+    conn.pragma_update(None, "journal_mode", "WAL")?;
+    conn.pragma_update(None, "synchronous", "NORMAL")?;
+    conn.pragma_update(None, "busy_timeout", "5000")?;
+
     init_database_inner(&conn)?;
-    DB_INITIALIZED.set(()).unwrap();
+
+    DB_CONNECTION.set(Arc::new(Mutex::new(conn))).unwrap();
+
+    eprintln!("✅ Mimir DB initialized at {:?}", db_path);
     Ok(())
 }
-
-pub fn get_connection() -> Result<Connection> {
-    if DB_INITIALIZED.get().is_none() {
+pub fn get_connection() -> Result<Arc<Mutex<Connection>>> {
+    if DB_CONNECTION.get().is_none() {
         init_database()?;
     }
-    Connection::open(get_db_path())
+
+    DB_CONNECTION.get().cloned().ok_or_else(|| {
+        rusqlite::Error::SqliteFailure(
+            rusqlite::ffi::Error::new(1),
+            Some("Database not initialized".to_string()),
+        )
+    })
 }

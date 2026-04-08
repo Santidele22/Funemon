@@ -1,8 +1,10 @@
+use std::sync::{Arc, Mutex};
+
 use crate::db::{
     get_session_context,
     models::{Memories, Reflection},
 };
-use rusqlite::{Connection, Result, params};
+use rusqlite::{params, Result};
 use serde_json::Value;
 
 const CREATE_REFLECTION: &str = "
@@ -228,7 +230,10 @@ pub fn build_prompt(memories: &[Memories]) -> String {
     prompt
 }
 
-pub fn generate_reflection(conn: &Connection, session_id: &str) -> Result<Reflection> {
+pub fn generate_reflection(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    session_id: &str,
+) -> Result<Reflection> {
     let memories = get_session_context(conn, session_id, 100)?;
 
     if memories.is_empty() {
@@ -250,6 +255,7 @@ pub fn generate_reflection(conn: &Connection, session_id: &str) -> Result<Reflec
     let reflection_id = uuid::Uuid::new_v4().to_string();
     let now = unix_timestamp();
 
+    let conn = conn.lock().unwrap();
     conn.execute(
         CREATE_REFLECTION,
         params![
@@ -278,9 +284,10 @@ pub fn generate_reflection(conn: &Connection, session_id: &str) -> Result<Reflec
 }
 
 pub fn get_reflection_by_session(
-    conn: &Connection,
+    conn: &Arc<Mutex<rusqlite::Connection>>,
     session_id: &str,
 ) -> Result<Option<Reflection>> {
+    let conn = conn.lock().unwrap();
     let mut stmt = conn.prepare(GET_REFLECTION_BY_SESSION)?;
     let mut rows = stmt.query(params![session_id])?;
 
@@ -300,7 +307,11 @@ pub fn get_reflection_by_session(
     }
 }
 
-pub fn delete_reflection(conn: &Connection, reflection_id: &str) -> Result<bool> {
+pub fn delete_reflection(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    reflection_id: &str,
+) -> Result<bool> {
+    let conn = conn.lock().unwrap();
     let now = unix_timestamp();
     let affected = conn.execute(DELETE_REFLECTION, params![now, reflection_id])?;
     Ok(affected > 0)

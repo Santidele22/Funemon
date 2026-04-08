@@ -1,7 +1,8 @@
-use crate::db::models::Memories;
-use rusqlite::{Connection, Result, Row, params};
+use std::sync::{Arc, Mutex};
 
-// --- Constantes SQL ---
+use crate::db::models::Memories;
+use rusqlite::{params, Result, Row};
+
 const CREATE_MEMORY: &str = "
     INSERT INTO memories (memory_id, session_id, title, type, what, why, where_field, learned, created_at, deleted_at)
     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
@@ -38,8 +39,6 @@ const GET_SESSION_MEMORIES: &str = "
     LIMIT ?2
 ";
 
-// --- Funciones Auxiliares ---
-
 fn unix_timestamp() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -62,7 +61,8 @@ fn memory_from_row(row: &Row) -> Result<Memories> {
     })
 }
 
-pub fn store_memory(conn: &Connection, memory: &Memories) -> Result<String> {
+pub fn store_memory(conn: &Arc<Mutex<rusqlite::Connection>>, memory: &Memories) -> Result<String> {
+    let conn = conn.lock().unwrap();
     conn.execute(
         CREATE_MEMORY,
         params![
@@ -81,7 +81,11 @@ pub fn store_memory(conn: &Connection, memory: &Memories) -> Result<String> {
     Ok(memory.memory_id.clone())
 }
 
-pub fn get_memory_by_id(conn: &Connection, memory_id: &str) -> Result<Option<Memories>> {
+pub fn get_memory_by_id(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    memory_id: &str,
+) -> Result<Option<Memories>> {
+    let conn = conn.lock().unwrap();
     let mut stmt = conn.prepare(GET_MEMORY_BY_ID)?;
     let mut rows = stmt.query(params![memory_id])?;
 
@@ -93,11 +97,12 @@ pub fn get_memory_by_id(conn: &Connection, memory_id: &str) -> Result<Option<Mem
 }
 
 pub fn search_memories(
-    conn: &Connection,
+    conn: &Arc<Mutex<rusqlite::Connection>>,
     query: &str,
     session_id: Option<&str>,
     limit: usize,
 ) -> Result<Vec<Memories>> {
+    let conn = conn.lock().unwrap();
     let mut sql = String::from(SEARCH_MEMORIES_BASE);
 
     if session_id.is_some() {
@@ -106,27 +111,27 @@ pub fn search_memories(
 
     sql.push_str(" AND m.deleted_at IS NULL");
     sql.push_str(" ORDER BY fts.score DESC");
-    sql.push_str(" LIMIT ?3"); // Cambiado a parámetro para mayor seguridad
+    sql.push_str(" LIMIT ?3");
 
     let mut stmt = conn.prepare(&sql)?;
 
-    // Ejecución basada en si hay session_id o no
     let memories_iter = match session_id {
         Some(sid) => stmt.query_map(params![query, sid, limit as i64], memory_from_row)?,
-        None => {
-            // El tercer parámetro (?3) se vuelve el segundo en la posición si no hay SID
-            // pero para mantener consistencia con el SQL dinámico, ajustamos los params:
-            stmt.query_map(
-                params![query, rusqlite::types::Null, limit as i64],
-                memory_from_row,
-            )?
-        }
+        None => stmt.query_map(
+            params![query, rusqlite::types::Null, limit as i64],
+            memory_from_row,
+        )?,
     };
 
     memories_iter.collect()
 }
 
-pub fn delete_memory(conn: &Connection, memory_id: &str, permanent: bool) -> Result<bool> {
+pub fn delete_memory(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    memory_id: &str,
+    permanent: bool,
+) -> Result<bool> {
+    let conn = conn.lock().unwrap();
     let affected = if permanent {
         conn.execute(HARD_DELETE_MEMORY, params![memory_id])?
     } else {
@@ -137,10 +142,11 @@ pub fn delete_memory(conn: &Connection, memory_id: &str, permanent: bool) -> Res
 }
 
 pub fn get_session_context(
-    conn: &Connection,
+    conn: &Arc<Mutex<rusqlite::Connection>>,
     session_id: &str,
     limit: usize,
 ) -> Result<Vec<Memories>> {
+    let conn = conn.lock().unwrap();
     let mut stmt = conn.prepare(GET_SESSION_MEMORIES)?;
 
     let memories = stmt

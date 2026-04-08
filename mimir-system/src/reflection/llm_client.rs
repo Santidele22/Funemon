@@ -1,12 +1,15 @@
 // src/reflection/llm_client.rs
 
 pub fn call_ollama(prompt: &str) -> Result<String, String> {
-    let client = reqwest::blocking::Client::new();
+    let client = reqwest::blocking::Client::builder()
+        .timeout(std::time::Duration::from_secs(120))
+        .build()
+        .map_err(|e| format!("Error creando cliente: {}", e))?;
 
     let response = client
         .post("http://localhost:11434/api/generate")
         .json(&serde_json::json!({
-            "model": "llama3.2",
+            "model": "llama3.2:latest",
             "prompt": prompt,
             "stream": false
         }))

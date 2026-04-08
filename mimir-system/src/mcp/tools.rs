@@ -110,7 +110,7 @@ NO esperar que el usuario lo pida. Tipos: observation | error | plan | preferenc
         &self,
         Parameters(p): Parameters<MemoryStoreParams>,
     ) -> Result<CallToolResult, McpError> {
-        let conn = get_connection().map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
         let memory = Memories {
             memory_id: uuid::Uuid::new_v4().to_string(),
@@ -149,7 +149,7 @@ o cuando el usuario pide buscar algo específico en el historial.")]
         &self,
         Parameters(p): Parameters<MemorySearchParams>,
     ) -> Result<CallToolResult, McpError> {
-        let conn = get_connection().map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
         let results = search_memories(
             &conn,
@@ -172,7 +172,7 @@ Retorna session_id necesario para todas las demás operaciones.")]
         &self,
         Parameters(p): Parameters<SessionStartParams>,
     ) -> Result<CallToolResult, McpError> {
-        let conn = get_connection().map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
         let session = start_session(&conn, &p.project, p.session_id.as_deref())
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
@@ -196,7 +196,7 @@ o para elegir una sesión a reanudar.")]
         &self,
         Parameters(p): Parameters<ProjectParams>,
     ) -> Result<CallToolResult, McpError> {
-        let conn = get_connection().map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
         let sessions = list_sessions(&conn, &p.project)
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
@@ -214,7 +214,7 @@ Si retorna vacío, la sesión es nueva.")]
         &self,
         Parameters(p): Parameters<SessionContextParams>,
     ) -> Result<CallToolResult, McpError> {
-        let conn = get_connection().map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
         let memories = get_session_context(&conn, &p.session_id, p.limit.unwrap_or(5))
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
@@ -232,7 +232,7 @@ Produce un resumen de alto nivel de lo aprendido.")]
         &self,
         Parameters(p): Parameters<SessionIdParams>,
     ) -> Result<CallToolResult, McpError> {
-        let conn = get_connection().map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
         let reflection = generate_reflection(&conn, &p.session_id)
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
@@ -257,7 +257,7 @@ Para la sesión actual, usar memory_reflect en su lugar.")]
         &self,
         Parameters(p): Parameters<SessionIdParams>,
     ) -> Result<CallToolResult, McpError> {
-        let conn = get_connection().map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
         match get_reflection_by_session(&conn, &p.session_id)
             .map_err(|e| McpError::internal_error(e.to_string(), None))?
@@ -282,7 +282,7 @@ Preferir soft delete salvo que se indique lo contrario.")]
         &self,
         Parameters(p): Parameters<DeleteSessionParams>,
     ) -> Result<CallToolResult, McpError> {
-        let conn = get_connection().map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
         let deleted = delete_session(&conn, &p.session_id, p.permanent.unwrap_or(false))
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
@@ -299,7 +299,7 @@ Default: 5 días de inactividad.")]
         &self,
         Parameters(p): Parameters<CleanupParams>,
     ) -> Result<CallToolResult, McpError> {
-        let conn = get_connection().map_err(|e| McpError::internal_error(e.to_string(), None))?;
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
         let count = cleanup_expired_sessions(&conn, &p.project, p.days_inactive.unwrap_or(5))
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
@@ -316,11 +316,8 @@ Default: 5 días de inactividad.")]
 #[tool_handler]
 impl ServerHandler for MemoryTools {
     fn get_info(&self) -> ServerInfo {
-        ServerInfo {
-            protocol_version: ProtocolVersion::V_2025_03_26,
-            capabilities: ServerCapabilities::builder().enable_tools().build(),
-            server_info: Implementation::from_build_env(),
-            instructions: Some(
+        ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
+            .with_instructions(
                 r#"
 Mimir es un sistema de memoria persistente. Seguís estas reglas de forma autónoma.
 
@@ -361,10 +358,9 @@ Al finalizar:
 - Si memory_context retorna vacío, informás al usuario que es sesión nueva.
 - Si memory_context retorna contexto, lo usás para responder con continuidad.
 - No usás memory_search como sustituto de memory_context para el inicio.
-        "#
+"#
                 .trim()
                 .to_string(),
-            ),
-        }
+            )
     }
 }

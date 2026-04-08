@@ -1,9 +1,10 @@
 use super::tools::MemoryTools;
-use rmcp::{service::serve_server, transport::stdio};
+use rmcp::{transport::stdio, ServiceExt};
 
 pub async fn run_server() -> Result<(), Box<dyn std::error::Error>> {
     let handler = MemoryTools::new();
 
-    serve_server(handler, stdio()).await?;
+    let service = handler.serve(stdio()).await?;
+    service.waiting().await?;
     Ok(())
 }

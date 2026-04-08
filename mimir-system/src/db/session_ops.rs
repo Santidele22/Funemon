@@ -1,4 +1,6 @@
-use rusqlite::{params, Connection, Result};
+use std::sync::{Arc, Mutex};
+
+use rusqlite::params;
 
 use crate::db::models::Sessions;
 
@@ -51,7 +53,7 @@ fn unix_timestamp() -> i64 {
         .as_secs() as i64
 }
 
-fn session_from_row(row: &rusqlite::Row) -> Result<Sessions> {
+fn session_from_row(row: &rusqlite::Row) -> Result<Sessions, rusqlite::Error> {
     Ok(Sessions {
         session_id: row.get(0)?,
         project: row.get(1)?,
@@ -63,15 +65,19 @@ fn session_from_row(row: &rusqlite::Row) -> Result<Sessions> {
 }
 
 pub fn start_session(
-    conn: &Connection,
+    conn: &Arc<Mutex<rusqlite::Connection>>,
     project: &str,
     existing_session_id: Option<&str>,
-) -> Result<Sessions> {
+) -> Result<Sessions, rusqlite::Error> {
+    let mut conn = conn.lock().unwrap();
+
     if let Some(sid) = existing_session_id {
         let now = unix_timestamp();
         conn.execute(UPDATE_LAST_ACTIVE, params![now, sid])?;
-        if let Some(session) = get_session_by_id(conn, sid)? {
-            return Ok(session);
+        let mut stmt = conn.prepare(GET_SESSION_BY_ID)?;
+        let mut rows = stmt.query(params![sid])?;
+        if let Some(row) = rows.next()? {
+            return session_from_row(row);
         }
     }
 
@@ -99,7 +105,11 @@ pub fn start_session(
     })
 }
 
-pub fn get_session_by_id(conn: &Connection, session_id: &str) -> Result<Option<Sessions>> {
+pub fn get_session_by_id(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    session_id: &str,
+) -> Result<Option<Sessions>, rusqlite::Error> {
+    let conn = conn.lock().unwrap();
     let mut stmt = conn.prepare(GET_SESSION_BY_ID)?;
     let mut rows = stmt.query(params![session_id])?;
 
@@ -110,7 +120,11 @@ pub fn get_session_by_id(conn: &Connection, session_id: &str) -> Result<Option<S
     }
 }
 
-pub fn list_sessions(conn: &Connection, project: &str) -> Result<Vec<Sessions>> {
+pub fn list_sessions(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    project: &str,
+) -> Result<Vec<Sessions>, rusqlite::Error> {
+    let conn = conn.lock().unwrap();
     let mut stmt = conn.prepare(LIST_SESSIONS)?;
     let mut rows = stmt.query(params![project])?;
 
@@ -121,7 +135,11 @@ pub fn list_sessions(conn: &Connection, project: &str) -> Result<Vec<Sessions>> 
     Ok(sessions)
 }
 
-pub fn get_active_session(conn: &Connection, project: &str) -> Result<Option<Sessions>> {
+pub fn get_active_session(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    project: &str,
+) -> Result<Option<Sessions>, rusqlite::Error> {
+    let conn = conn.lock().unwrap();
     let mut stmt = conn.prepare(GET_ACTIVE_SESSION)?;
     let mut rows = stmt.query(params![project])?;
 
@@ -133,10 +151,11 @@ pub fn get_active_session(conn: &Connection, project: &str) -> Result<Option<Ses
 }
 
 pub fn cleanup_expired_sessions(
-    conn: &Connection,
+    conn: &Arc<Mutex<rusqlite::Connection>>,
     project: &str,
     days_inactive: i64,
-) -> Result<usize> {
+) -> Result<usize, rusqlite::Error> {
+    let conn = conn.lock().unwrap();
     let now = unix_timestamp();
     let expire_time = now - (days_inactive * 86400);
 
@@ -145,14 +164,29 @@ pub fn cleanup_expired_sessions(
     Ok(affected)
 }
 
-pub fn end_session(conn: &Connection, session_id: &str) -> Result<Sessions> {
+pub fn end_session(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    session_id: &str,
+) -> Result<Sessions, rusqlite::Error> {
+    let conn = conn.lock().unwrap();
     let now = unix_timestamp();
     conn.execute(END_SESSION_SQL, params![now, session_id])?;
 
-    get_session_by_id(conn, session_id)?.ok_or_else(|| rusqlite::Error::QueryReturnedNoRows)
+    let mut stmt = conn.prepare(GET_SESSION_BY_ID)?;
+    let mut rows = stmt.query(params![session_id])?;
+
+    rows.next()?
+        .map(session_from_row)
+        .transpose()?
+        .ok_or(rusqlite::Error::QueryReturnedNoRows)
 }
 
-pub fn delete_session(conn: &Connection, session_id: &str, permanent: bool) -> Result<bool> {
+pub fn delete_session(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    session_id: &str,
+    permanent: bool,
+) -> Result<bool, rusqlite::Error> {
+    let conn = conn.lock().unwrap();
     let affected = if permanent {
         conn.execute(HARD_DELETE_SESSION, params![session_id])?
     } else {
