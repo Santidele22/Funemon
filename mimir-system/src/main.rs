@@ -10,12 +10,7 @@ use cli::{Cli, run_cli};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cli = Cli::parse();
 
-    if std::env::args().len() > 1 {
-        return run_cli(cli);
-    }
-
-    db::init_database()?;
-    mcp::run_server().await?;
+    run_cli(cli).await?;
 
     Ok(())
 }

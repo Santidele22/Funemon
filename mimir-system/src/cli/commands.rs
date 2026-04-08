@@ -10,9 +10,9 @@ pub struct Cli {
 
 #[derive(Subcommand)]
 pub enum Commands {
+    Mcp,
     /// Inicializa la base de datos (crea tablas y triggers)
     Init,
-
     /// Comandos para gestionar sesiones
     #[command(subcommand)]
     Session(SessionCommands),

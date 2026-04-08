@@ -6,47 +6,60 @@ use crate::db::{
     init_database, list_sessions, search_memories, start_session, store_memory,
 };
 
-pub fn run_cli(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
-    if let Some(command) = cli.command {
-        match command {
-            Commands::Init => {
-                init_database()?;
-                println!("✅ Base de datos inicializada correctamente");
-            }
+pub async fn run_cli(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
+    match cli.command {
+        Some(Commands::Mcp) => {
+            init_database()?;
+            eprintln!("Mimir MCP server starting");
+            crate::mcp::run_server().await?;
+        }
+        Some(Commands::Init) => {
+            init_database()?;
+            eprintln!("✅ Base de datos inicializada correctamente");
+        }
 
-            Commands::Session(cmd) => handle_session_command(cmd)?,
-            Commands::Memories(cmd) => handle_memory_command(cmd)?,
-            Commands::Reflection(cmd) => handle_reflection_command(cmd)?,
+        Some(Commands::Session(cmd)) => handle_session_command(cmd)?,
+        Some(Commands::Memories(cmd)) => handle_memory_command(cmd)?,
+        Some(Commands::Reflection(cmd)) => handle_reflection_command(cmd)?,
 
-            Commands::Stats => {
-                let conn = get_connection()?;
+        Some(Commands::Stats) => {
+            let conn = get_connection()?;
 
-                // Contar sesiones
-                let session_count: i64 = conn.query_row(
-                    "SELECT COUNT(*) FROM sessions WHERE deleted_at IS NULL",
-                    [],
-                    |row| row.get(0),
-                )?;
+            // Contar sesiones
+            let session_count: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM sessions WHERE deleted_at IS NULL",
+                [],
+                |row| row.get(0),
+            )?;
 
-                // Contar memorias
-                let memory_count: i64 = conn.query_row(
-                    "SELECT COUNT(*) FROM memories WHERE deleted_at IS NULL",
-                    [],
-                    |row| row.get(0),
-                )?;
+            // Contar memorias
+            let memory_count: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM memories WHERE deleted_at IS NULL",
+                [],
+                |row| row.get(0),
+            )?;
 
-                // Contar reflexiones
-                let reflection_count: i64 = conn.query_row(
-                    "SELECT COUNT(*) FROM reflections WHERE deleted_at IS NULL",
-                    [],
-                    |row| row.get(0),
-                )?;
+            // Contar reflexiones
+            let reflection_count: i64 = conn.query_row(
+                "SELECT COUNT(*) FROM reflections WHERE deleted_at IS NULL",
+                [],
+                |row| row.get(0),
+            )?;
 
-                println!("📊 Estadísticas de Mimir:");
-                println!("   Sesiones activas: {}", session_count);
-                println!("   Memorias guardadas: {}", memory_count);
-                println!("   Reflexiones generadas: {}", reflection_count);
-            }
+            println!("📊 Estadísticas de Mimir:");
+            println!("   Sesiones activas: {}", session_count);
+            println!("   Memorias guardadas: {}", memory_count);
+            println!("   Reflexiones generadas: {}", reflection_count);
+        }
+        None => {
+            println!("🧠 Mimir CLI");
+            println!("Usá alguno de los siguientes comandos:");
+            println!("  mimir mcp                → Inicia el servidor MCP");
+            println!("  mimir init               → Inicializa la base de datos");
+            println!("  mimir session ...        → Gestión de sesiones");
+            println!("  mimir memories ...       → Gestión de memorias");
+            println!("  mimir reflection ...     → Gestión de reflexiones");
+            println!("  mimir stats              → Estadísticas");
         }
     }
 
