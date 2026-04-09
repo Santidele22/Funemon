@@ -27,6 +27,9 @@ pub enum Commands {
     /// Muestra estadísticas del sistema
     Stats,
 
+    /// Abre la interfaz TUI interactiva
+    Tui,
+
     Mcp,
 }
 

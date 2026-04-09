@@ -58,7 +58,7 @@ pub enum ReflectionLevel {
     PATTERN,
     PRINCIPLE,
 }
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone)]
 pub struct Sessions {
     pub session_id: String,
     pub project: String,
@@ -68,7 +68,7 @@ pub struct Sessions {
     pub ended_at: Option<i64>,
 }
 
-#[derive(Serialize, Deserialize, JsonSchema)]
+#[derive(Serialize, Deserialize, JsonSchema, Clone)]
 pub struct Memories {
     pub memory_id: String,
     pub session_id: String,

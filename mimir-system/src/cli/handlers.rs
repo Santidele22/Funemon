@@ -1,5 +1,6 @@
 use crate::cli::commands::{Cli, Commands, MemoryCommands, ReflectionCommands, SessionCommands};
 use crate::db::models::{Memories, MemoryType};
+use crate::tui::run_tui;
 use rusqlite::Row;
 use crate::db::{
     cleanup_expired_sessions, delete_memory, delete_reflection, delete_session,
@@ -47,6 +48,10 @@ pub async fn run_cli(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
             println!("   Sesiones activas: {}", session_count);
             println!("   Memorias guardadas: {}", memory_count);
             println!("   Reflexiones generadas: {}", reflection_count);
+        }
+
+        Some(Commands::Tui) => {
+            run_tui()?;
         }
         None => {
             println!("🧠 Mimir CLI");
