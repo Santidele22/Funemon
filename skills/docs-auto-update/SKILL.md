@@ -200,13 +200,13 @@ def get_new_commands(cargo_diff):
     return new_commands
 ```
 
-## Integración con Mimir CLI
+## Integración con Funemon CLI
 
 ### Auto-detectar commands
 
 ```rust
-// En Mimir, parsear commands:
-// mimir --help -> list commands
+// En Funemon, parsear commands:
+// funemon --help -> list commands
 // Comparar con README usage section
 ```
 

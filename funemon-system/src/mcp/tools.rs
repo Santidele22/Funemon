@@ -319,7 +319,7 @@ impl ServerHandler for MemoryTools {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
             .with_instructions(
                 r#"
-Mimir es un sistema de memoria persistente. Seguís estas reglas de forma autónoma.
+Funemon es un sistema de memoria persistente. Seguís estas reglas de forma autónoma.
 
 ## TOOLS DISPONIBLES: DOS TIERS
 

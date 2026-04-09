@@ -11,7 +11,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 static RUNNING: AtomicBool = AtomicBool::new(true);
 
-const TITLE: &str = "MIMIR";
+const TITLE: &str = "FUNEMON";
 const WIDTH: usize = 60;
 
 pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {

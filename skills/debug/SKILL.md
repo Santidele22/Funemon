@@ -113,7 +113,7 @@ memory_store(
 
 ### Por qué es CRUCIAL:
 
-- Mimir guarda memoria - esto es su strength
+- Funemon guarda memoria - esto es su strength
 - Errores repetidos son los más costosos
 - Guardar el patrón evita recidiva
 
