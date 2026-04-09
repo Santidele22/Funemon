@@ -1,4 +1,4 @@
-//! Simple TUI menu with interactive input
+//! Simple TUI menu
 
 use crate::db::{get_connection, list_sessions};
 use crossterm::{
@@ -17,19 +17,20 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
     execute!(stdout, EnterAlternateScreen)?;
 
     let projects = get_projects();
+    let names = get_projects_names();
     let mut selected = 0;
-    let mut view = 0; // 0=menu, 1=projects, 2=sessions, 3=memories, 4=search, 5=help
+    let mut view = 0;
 
     while RUNNING.load(Ordering::SeqCst) {
         println!("\x1b[2J\x1b[H");
 
         match view {
-            0 => draw_main_menu(&projects, &mut selected),
-            1 => draw_projects_view(&projects, &mut selected),
-            2 => draw_sessions_view(),
-            3 => draw_memories_view(),
-            4 => draw_search_view(),
-            5 => draw_help_view(),
+            0 => draw_main_menu(&names, selected),
+            1 => draw_projects(&projects),
+            2 => draw_sessions(&projects, selected, &names),
+            3 => draw_memories(),
+            4 => draw_search(),
+            5 => draw_help(),
             _ => {}
         }
 
@@ -39,9 +40,15 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
             if key.kind == KeyEventKind::Press {
                 match key.code {
                     KeyCode::Char('q') => RUNNING.store(false, Ordering::SeqCst),
-                    KeyCode::Esc => view = 0,
+                    KeyCode::Esc => {
+                        view = 0;
+                        selected = 0;
+                    }
                     KeyCode::Char('j') | KeyCode::Down => {
-                        let max = get_max(view, &projects);
+                        let max = match view {
+                            0 => 4,
+                            _ => 10,
+                        };
                         if selected < max {
                             selected += 1;
                         }
@@ -85,11 +92,32 @@ pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
 
     disable_raw_mode().ok();
     execute!(stdout, LeaveAlternateScreen).ok();
-    println!("\n");
+    println!();
     Ok(())
 }
 
-fn get_projects() -> Vec<String> {
+fn get_projects() -> Vec<(String, String)> {
+    if let Ok(conn) = get_connection() {
+        if let Ok(sessions) = list_sessions(&conn, "") {
+            let mut result: Vec<(String, String)> = sessions
+                .into_iter()
+                .map(|s| {
+                    let date = chrono::DateTime::from_timestamp(s.last_active, 0);
+                    let date_str = match date {
+                        Some(d) => d.format("%Y-%m-%d").to_string(),
+                        None => "?".to_string(),
+                    };
+                    (s.project, date_str)
+                })
+                .collect();
+            result.sort_by(|a, b| b.1.cmp(&a.1));
+            return result;
+        }
+    }
+    vec![]
+}
+
+fn get_projects_names() -> Vec<String> {
     if let Ok(conn) = get_connection() {
         if let Ok(sessions) = list_sessions(&conn, "") {
             let mut p: Vec<String> = sessions.into_iter().map(|s| s.project).collect();
@@ -101,110 +129,116 @@ fn get_projects() -> Vec<String> {
     vec![]
 }
 
-fn get_max(view: usize, projects: &[String]) -> usize {
-    match view {
-        0 => 4,
-        1 => projects.len().saturating_sub(1),
-        2 => 4,
-        3 => 4,
-        4 => 0,
-        5 => 0,
-        _ => 0,
-    }
-}
+fn draw_main_menu(names: &[String], selected: usize) {
+    println!("🧠 MIMIR TUI v0.1.0");
+    println!();
 
-fn draw_main_menu(projects: &[String], selected: &mut usize) {
-    println!("╔════════════════════════════════════════╗");
-    println!("║        🧠 MIMIR TUI v0.1.0           ║");
-    println!("╠════════════════════════════════════════╣");
-
-    let items = [
-        "📁 Proyectos",
-        "📋 Sesiones",
-        "💾 Memorias",
-        "🔍 Buscar",
-        "❓ Ayuda",
-    ];
+    let items = ["Proyectos", "Sesiones", "Memorias", "Buscar", "Ayuda"];
     for (i, item) in items.iter().enumerate() {
-        let marker = if *selected == i { "▶" } else { " " };
-        println!("║  {} {}. {}                   ║", marker, i + 1, item);
+        let marker = if selected == i { "▶" } else { " " };
+        println!("{} {}. {}", marker, i + 1, item);
     }
 
-    println!("╠════════════════════════════════════════╣");
-    println!("║  j/k: navegar  |  Enter: entrar     ║");
-    println!("║  Esc: inicio  |  q: salir         ║");
-    println!("╚════════════════════════════════════════╝");
+    println!();
+    println!("j/k: navegar | Enter: entrar | Esc: inicio | q: salir");
 
-    if !projects.is_empty() {
-        println!("\n📁 Tus proyectos ({}):", projects.len());
-        for p in projects.iter().take(8) {
-            println!("   {}", p);
+    if !names.is_empty() {
+        println!();
+        println!("📁 Tus proyectos ({}):", names.len());
+        for p in names.iter().take(8) {
+            println!("   - {}", p);
         }
     }
     print!("\n> ");
 }
 
-fn draw_projects_view(projects: &[String], selected: &mut usize) {
-    println!("╔════════════════════════════════════════╗");
-    println!("║        📁 PROYECTOS                 ║");
-    println!("╠════════════════════════════════════════╣");
+fn draw_projects(projects: &[(String, String)]) {
+    println!("📁 PROYECTOS");
+    println!();
 
     if projects.is_empty() {
-        println!("║  No hay proyectos aún               ║");
+        println!("No hay proyectos");
     } else {
-        for (i, p) in projects.iter().take(10).enumerate() {
-            let marker = if *selected == i { "▶" } else { " " };
-            let name = if p.len() > 28 { &p[..28] } else { p.as_str() };
-            println!("║  {} {:.<28}║", marker, name);
+        let mut grouped: std::collections::HashMap<String, String> =
+            std::collections::HashMap::new();
+        for (p, d) in projects {
+            if !grouped.contains_key(p) {
+                grouped.insert(p.clone(), d.clone());
+            }
+        }
+
+        let mut list: Vec<_> = grouped.into_iter().collect();
+        list.sort_by(|a, b| b.1.cmp(&a.1));
+
+        for (i, (p, d)) in list.iter().take(12).enumerate() {
+            let marker = if i == 0 { "▶" } else { " " };
+            println!("{} {} ({})", marker, p, d);
         }
     }
 
-    println!("╠════════════════════════════════════════╣");
-    println!("║  j/k: navegar  |  Enter: seleccionar║");
-    println!("║  Esc: volver |  q: salir         ║");
-    println!("╚════════════════════════════════════════╝");
+    println!();
     print!("\n> ");
 }
 
-fn draw_sessions_view() {
-    println!("╔════════════════════════════════════════╗");
-    println!("║        📋 SESIONES                 ║");
-    println!("╠════════════════════════════════════════╣");
-    println!("║  Selecciona un proyecto primero     ║");
-    println!("║  desde la vista de Proyectos     ║");
-    println!("╚════════════════════════════════════════╝");
+fn draw_sessions(projects: &[(String, String)], selected: usize, names: &[String]) {
+    println!("📋 SESIONES");
+    println!();
+
+    if let Some(pname) = names.get(selected) {
+        println!("Proyecto: {}", pname);
+        println!();
+
+        let count = projects.iter().filter(|(p, _)| p == pname).count();
+        println!("Total de sesiones: {}", count);
+
+        if count > 0 {
+            let session_dates: Vec<_> = projects
+                .iter()
+                .filter(|(p, _)| p == pname)
+                .map(|(_, d)| d.clone())
+                .collect();
+            for d in session_dates.iter().take(5) {
+                println!("  - {}", d);
+            }
+            if count > 5 {
+                println!("  ... y {} mas", count - 5);
+            }
+        } else {
+            println!("No hay sesiones");
+        }
+    } else {
+        println!("Selecciona un proyecto");
+    }
+
+    println!();
     print!("\n> ");
 }
 
-fn draw_memories_view() {
-    println!("╔════════════════════════════════════════╗");
-    println!("║        💾 MEMORIAS                  ║");
-    println!("╠════════════════════════════════════════╣");
-    println!("║  Selecciona una sesión primero    ║");
-    println!("║  desde la vista de Sesiones    ║");
-    println!("╚════════════════════════════════════════╝");
+fn draw_memories() {
+    println!("💾 MEMORIAS");
+    println!();
+
+    println!("Selecciona una sesion para ver memorias");
+    println!();
+    println!("Ve a Sesiones (2) para seleccionar");
     print!("\n> ");
 }
 
-fn draw_search_view() {
-    println!("╔════════════════════════════════════════╗");
-    println!("║        🔍 BUSCAR                  ║");
-    println!("╠════════════════════════════════════════���");
-    println!("║  Escribe para buscar en memorias     ║");
-    println!("╚════════════════════════════════════════╝");
+fn draw_search() {
+    println!("🔍 BUSCAR");
+    println!();
+    println!("Proximamente...");
     print!("\n> ");
 }
 
-fn draw_help_view() {
-    println!("╔════════════════════════════════════════╗");
-    println!("║        ❓ AYUDA                     ║");
-    println!("╠════════════════════════════════════════╣");
-    println!("║  COMANDOS:                          ║");
-    println!("║  1-5: Ir a vista                   ║");
-    println!("║  j/k: navegar                       ║");
-    println!("║  Enter: entrar/seleccionar          ║");
-    println!("║  Esc: volver al menú                 ║");
-    println!("║  q: salir                        ║");
-    println!("╚════════════════════════════════════════╝");
+fn draw_help() {
+    println!("❓ AYUDA");
+    println!();
+    println!("COMANDOS:");
+    println!("  1-5: Ir a seccion");
+    println!("  j/k: navegar");
+    println!("  Enter: entrar");
+    println!("  Esc: volver");
+    println!("  q: salir");
     print!("\n> ");
 }
