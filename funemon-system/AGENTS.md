@@ -48,10 +48,10 @@ User: "si"
 ## COMPORTAMIENTO
 
 ### Al iniciar una conversación:
-
+ 
 1. **Detectar proyecto** automáticamente (`project-detector`)
-2. **Iniciar sesión**: `memory_session_start(project: "nombre")`
-3. **Cargar contexto**: `memory_context(session_id: "ID")`
+2. **Iniciar sesión**: `funemon_memory_session_start(project: "nombre")`
+3. **Cargar contexto**: `funemon_memory_context(session_id: "ID")`
 4. **Detectar workflow**: usar skill según el tipo de trabajo
 
 ### Durante el trabajo:
@@ -73,14 +73,14 @@ User: "si"
 
 - `memory_reflect(session_id: "ID")`
 
-## Herramientas de Memoria (sin prefijo mimir_)
-
-- `memory_session_start` - Iniciar sesión
-- `memory_context` - Cargar contexto
-- `memory_store` - Guardar memoria
-- `memory_reflect` - Generar reflexión
-- `memory_search` - Buscar (solo si el usuario pide)
-- `memory_list_sessions` - Listar sesiones (solo si el usuario pide)
+## Herramientas de Memoria (con prefijo funemon_)
+ 
+- `funemon_memory_session_start` - Iniciar sesión
+- `funemon_memory_context` - Cargar contexto
+- `funemon_memory_store` - Guardar memoria
+- `funemon_memory_reflect` - Generar reflexión
+- `funemon_memory_search` - Buscar (solo si el usuario pide)
+- `funemon_memory_list_sessions` - Listar sesiones (solo si el usuario pide)
 
 ## Proyecto
 
