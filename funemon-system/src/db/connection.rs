@@ -6,7 +6,7 @@ static DB_CONNECTION: OnceLock<Arc<Mutex<Connection>>> = OnceLock::new();
 
 fn get_db_path() -> PathBuf {
     let mut path = dirs::home_dir().expect("No home dir");
-    path.push(".local/share/mimir/mimir.db");
+    path.push(".local/share/funemon/funemon.db");
     path
 }
 
@@ -109,7 +109,7 @@ pub fn init_database() -> Result<()> {
 
     DB_CONNECTION.set(Arc::new(Mutex::new(conn))).unwrap();
 
-    eprintln!("✅ Mimir DB initialized at {:?}", db_path);
+    eprintln!("✅ Funemon DB initialized at {:?}", db_path);
     Ok(())
 }
 pub fn get_connection() -> Result<Arc<Mutex<Connection>>> {

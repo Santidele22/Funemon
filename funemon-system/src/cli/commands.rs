@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "mimir")]
+#[command(name = "funemon")]
 #[command(about = "Sistema de memoria persistente para agentes de programación", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]
@@ -26,6 +26,9 @@ pub enum Commands {
 
     /// Muestra estadísticas del sistema
     Stats,
+
+    /// Abre la interfaz TUI interactiva
+    Tui,
 
     Mcp,
 }

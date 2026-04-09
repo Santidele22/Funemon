@@ -1,4 +1,4 @@
-# Mimir - Sistema de Memoria Persistente para Agentes de Programación
+# Funemon - Sistema de Memoria Persistente para Agentes de Programación
 
 <p align="center">
   <img src="https://img.shields.io/badge/Rust-1.94.1-orange" alt="Rust Version">
@@ -6,7 +6,7 @@
   <img src="https://img.shields.io/badge/MCP-Protocol-blue" alt="MCP Protocol">
 </p>
 
-Mimir es un sistema de memoria persistente diseñado para agentes de programación IA. Mantiene contexto entre sesiones, guarda decisiones, errores y preferencias, y genera reflexiones automáticas.
+Funemon es un sistema de memoria persistente diseñado para agentes de programación IA. Mantiene contexto entre sesiones, guarda decisiones, errores y preferencias, y genera reflexiones automáticas.
 
 ## Características
 
@@ -28,14 +28,14 @@ Mimir es un sistema de memoria persistente diseñado para agentes de programaci�
 ### Build
 
 ```bash
-cd mimir-system
+cd funemon-system
 cargo build --release
 ```
 
 ### Instalación del binario
 
 ```bash
-cargo install --path mimir-system
+cargo install --path funemon-system
 ```
 
 ## Configuración
@@ -45,13 +45,13 @@ cargo install --path mimir-system
 Copia `opencode.json` a `~/.config/opencode/opencode.json`:
 
 ```bash
-cp mimir-system/opencode.json ~/.config/opencode/opencode.json
+cp funemon-system/opencode.json ~/.config/opencode/opencode.json
 ```
 
 ### Inicializar Base de Datos
 
 ```bash
-mimir init
+funemon init
 ```
 
 ## Uso
@@ -60,29 +60,29 @@ mimir init
 
 ```bash
 # Iniciar una sesión
-mimir session start --project "mi-proyecto"
+funemon session start --project "mi-proyecto"
 
 # Listar sesiones
-mimir session list
+funemon session list
 
 # Guardar una memoria
-mimir memories store --session-id "uuid" --title "Error resuelto" --type "error" --what "Descripción del error" --why "Cómo se resolvió"
+funemon memories store --session-id "uuid" --title "Error resuelto" --type "error" --what "Descripción del error" --why "Cómo se resolvió"
 
 # Buscar memorias
-mimir memories search --session-id "uuid" "búsqueda"
+funemon memories search --session-id "uuid" "búsqueda"
 
 # Generar reflexión
-mimir reflection generate --session-id "uuid"
+funemon reflection generate --session-id "uuid"
 
 # Ver estadísticas
-mimir stats
+funemon stats
 ```
 
 ### MCP Server
 
 ```bash
 # Iniciar servidor MCP
-mimir mcp
+funemon mcp
 ```
 
 El servidor MCP expone las siguientes tools:
@@ -105,8 +105,8 @@ Ver `opencode.json` para la configuración completa. El agente usará las tools 
 ## Estructura del Proyecto
 
 ```
-Mimir/
-├── mimir-system/
+Funemon/
+├── funemon-system/
 │   ├── src/
 │   │   ├── cli/          # Interfaz CLI
 │   │   ├── db/           # Base de datos SQLite
@@ -125,6 +125,20 @@ Mimir/
 - **clap**: CLI parser
 - **chrono**: Fechas y tiempos
 - **reqwest**: HTTP client (para Ollama)
+
+## Latest Changes
+
+<!-- AUTO_UPDATE_START -->
+
+### Nuevas Features
+- TUI interactiva
+- Skills para Rust development
+- Auto-update de documentación
+
+### Bug Fixes
+- Ninguno
+
+<!-- AUTO_UPDATE_END -->
 
 ## License
 

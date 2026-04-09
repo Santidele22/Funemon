@@ -21,10 +21,10 @@
     }
   },
   "mcp": {
-    "mimir": {
+    "funemon": {
       "type": "local",
       "command": [
-        "mimir",
+        "funemon",
         "mcp"
       ],
       "enabled": true

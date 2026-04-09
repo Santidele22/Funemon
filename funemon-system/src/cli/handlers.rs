@@ -1,5 +1,6 @@
 use crate::cli::commands::{Cli, Commands, MemoryCommands, ReflectionCommands, SessionCommands};
 use crate::db::models::{Memories, MemoryType};
+use crate::tui::run_tui;
 use rusqlite::Row;
 use crate::db::{
     cleanup_expired_sessions, delete_memory, delete_reflection, delete_session,
@@ -43,20 +44,24 @@ pub async fn run_cli(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
                 |row: &rusqlite::Row| row.get(0),
             )?;
 
-            println!("📊 Estadísticas de Mimir:");
+            println!("📊 Estadísticas de Funemon:");
             println!("   Sesiones activas: {}", session_count);
             println!("   Memorias guardadas: {}", memory_count);
             println!("   Reflexiones generadas: {}", reflection_count);
         }
+
+        Some(Commands::Tui) => {
+            run_tui()?;
+        }
         None => {
-            println!("🧠 Mimir CLI");
+            println!("🧠 Funemon CLI");
             println!("Usá alguno de los siguientes comandos:");
-            println!("  mimir mcp                → Inicia el servidor MCP");
-            println!("  mimir init               → Inicializa la base de datos");
-            println!("  mimir session ...        → Gestión de sesiones");
-            println!("  mimir memories ...       → Gestión de memorias");
-            println!("  mimir reflection ...     → Gestión de reflexiones");
-            println!("  mimir stats              → Estadísticas");
+            println!("  funemon mcp                → Inicia el servidor MCP");
+            println!("  funemon init               → Inicializa la base de datos");
+            println!("  funemon session ...        → Gestión de sesiones");
+            println!("  funemon memories ...       → Gestión de memorias");
+            println!("  funemon reflection ...     → Gestión de reflexiones");
+            println!("  funemon stats              → Estadísticas");
         }
     }
 
@@ -268,7 +273,7 @@ fn handle_reflection_command(cmd: ReflectionCommands) -> Result<(), Box<dyn std:
                 None => {
                     println!("📭 No hay reflexión para la sesión {}", session_id);
                     println!(
-                        "   Ejecuta 'mimir reflection generate --session-id {}' para generar una",
+                        "   Ejecuta 'funemon reflection generate --session-id {}' para generar una",
                         session_id
                     );
                 }

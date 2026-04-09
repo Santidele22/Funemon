@@ -1,0 +1,24 @@
+name: Auto Update Docs
+
+on:
+  push:
+    branches: [main, dev]
+  release:
+    types: [published]
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Get commits
+        run: git log --format="%s" origin/dev..HEAD --oneline > changes.txt || echo "no changes"
+      - name: Show changes
+        run: cat changes.txt
+      - name: Commit
+        run: |
+          git config --local user.email "bot@github.com"
+          git config --local user.name "GitHub Bot"
+          git add -A
+          git commit -m "docs: auto update" || echo "nothing to commit"
+          git push || echo "nothing to push"

@@ -1,8 +1,8 @@
-# Reglas de comportamiento - Mimir
+# Reglas de comportamiento - Funemon
 
 ## SKILLS DISPONIBLES
 
-Mimir expose las siguientes skills. Según el contexto, usá la skill apropiada:
+Funemon expose las siguientes skills. Según el contexto, usá la skill apropiada:
 
 | Skill | Cuándo se activa | Descripción |
 |-------|---------------|-------------|
