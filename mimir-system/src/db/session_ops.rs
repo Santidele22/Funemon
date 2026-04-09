@@ -23,7 +23,8 @@ const GET_ACTIVE_SESSION: &str = "
 const LIST_SESSIONS: &str = "
     SELECT session_id, project, created_at, last_active, deleted_at, ended_at
     FROM sessions
-    WHERE project = ?1 AND deleted_at IS NULL
+    WHERE deleted_at IS NULL
+    AND ( ?1 = '' OR project = ?1 )
     ORDER BY last_active DESC
 ";
 const CLEANUP_EXPIRED: &str = "
