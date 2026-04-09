@@ -11,6 +11,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 static RUNNING: AtomicBool = AtomicBool::new(true);
 
+const TITLE: &str = "MIMIR";
+const WIDTH: usize = 60;
+
 pub fn run_tui() -> Result<(), Box<dyn std::error::Error>> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -130,34 +133,37 @@ fn get_projects_names() -> Vec<String> {
 }
 
 fn draw_main_menu(names: &[String], selected: usize) {
-    println!("🧠 MIMIR TUI v0.1.0");
+    box_title();
     println!();
 
     let items = ["Proyectos", "Sesiones", "Memorias", "Buscar", "Ayuda"];
     for (i, item) in items.iter().enumerate() {
         let marker = if selected == i { "▶" } else { " " };
-        println!("{} {}. {}", marker, i + 1, item);
+        box_line(&format!("{}. {}", i + 1, item), false);
     }
 
-    println!();
-    println!("j/k: navegar | Enter: entrar | Esc: inicio | q: salir");
+    box_line(
+        "j/k: navegar | Enter: entrar | Esc: inicio | q: salir",
+        false,
+    );
 
     if !names.is_empty() {
         println!();
-        println!("📁 Tus proyectos ({}):", names.len());
+        box_line(&format!("Tus proyectos ({}):", names.len()), false);
         for p in names.iter().take(8) {
-            println!("   - {}", p);
+            box_line(&format!("  - {}", p), false);
         }
     }
-    print!("\n> ");
+
+    println!("{}", get_right_border());
+    print!("> ");
 }
 
 fn draw_projects(projects: &[(String, String)]) {
-    println!("📁 PROYECTOS");
-    println!();
+    box_title();
 
     if projects.is_empty() {
-        println!("No hay proyectos");
+        box_line("No hay proyectos", false);
     } else {
         let mut grouped: std::collections::HashMap<String, String> =
             std::collections::HashMap::new();
@@ -172,24 +178,22 @@ fn draw_projects(projects: &[(String, String)]) {
 
         for (i, (p, d)) in list.iter().take(12).enumerate() {
             let marker = if i == 0 { "▶" } else { " " };
-            println!("{} {} ({})", marker, p, d);
+            box_line(&format!("{} {} ({})", marker, p, d), false);
         }
     }
 
-    println!();
-    print!("\n> ");
+    println!("{}", get_right_border());
+    print!("> ");
 }
 
 fn draw_sessions(projects: &[(String, String)], selected: usize, names: &[String]) {
-    println!("📋 SESIONES");
-    println!();
+    box_title();
 
     if let Some(pname) = names.get(selected) {
-        println!("Proyecto: {}", pname);
-        println!();
+        box_line(&format!("Proyecto: {}", pname), false);
 
         let count = projects.iter().filter(|(p, _)| p == pname).count();
-        println!("Total de sesiones: {}", count);
+        box_line(&format!("Total de sesiones: {}", count), false);
 
         if count > 0 {
             let session_dates: Vec<_> = projects
@@ -198,47 +202,76 @@ fn draw_sessions(projects: &[(String, String)], selected: usize, names: &[String
                 .map(|(_, d)| d.clone())
                 .collect();
             for d in session_dates.iter().take(5) {
-                println!("  - {}", d);
+                box_line(&format!("  - {}", d), false);
             }
             if count > 5 {
-                println!("  ... y {} mas", count - 5);
+                box_line(&format!("  ... y {} mas", count - 5), false);
             }
         } else {
-            println!("No hay sesiones");
+            box_line("No hay sesiones", false);
         }
     } else {
-        println!("Selecciona un proyecto");
+        box_line("Selecciona un proyecto", false);
     }
 
-    println!();
-    print!("\n> ");
+    println!("{}", get_right_border());
+    print!("> ");
 }
 
 fn draw_memories() {
-    println!("💾 MEMORIAS");
-    println!();
-
-    println!("Selecciona una sesion para ver memorias");
-    println!();
-    println!("Ve a Sesiones (2) para seleccionar");
-    print!("\n> ");
+    box_title();
+    box_line("Selecciona una sesion para ver memorias", false);
+    box_line("Ve a Sesiones (2) para seleccionar", false);
+    println!("{}", get_right_border());
+    print!("> ");
 }
 
 fn draw_search() {
-    println!("🔍 BUSCAR");
-    println!();
-    println!("Proximamente...");
-    print!("\n> ");
+    box_title();
+    box_line("Proximamente...", false);
+    println!("{}", get_right_border());
+    print!("> ");
 }
 
 fn draw_help() {
-    println!("❓ AYUDA");
-    println!();
-    println!("COMANDOS:");
-    println!("  1-5: Ir a seccion");
-    println!("  j/k: navegar");
-    println!("  Enter: entrar");
-    println!("  Esc: volver");
-    println!("  q: salir");
-    print!("\n> ");
+    box_title();
+    box_line("COMANDOS:", false);
+    box_line("  1-5: Ir a seccion", false);
+    box_line("  j/k: navegar", false);
+    box_line("  Enter: entrar", false);
+    box_line("  Esc: volver", false);
+    box_line("  q: salir", false);
+    println!("{}", get_right_border());
+    print!("> ");
+}
+
+// ============ BOX DRAWING FUNCTIONS ============
+
+fn box_title() {
+    let title = format!(" 🧠 {} ", TITLE);
+    let padding = WIDTH.saturating_sub(title.len());
+    let left_pad = padding / 2;
+    let right_pad = padding - left_pad;
+
+    println!(
+        "┌{}{}{}┐",
+        "─".repeat(left_pad),
+        title,
+        "─".repeat(right_pad)
+    );
+}
+
+fn box_line(content: &str, is_last: bool) {
+    let len = content.len();
+    if len > WIDTH - 2 {
+        // Truncate content if too long
+        let truncated = &content[..WIDTH - 5];
+        println!("│ {} │", truncated);
+    } else {
+        println!("│ {}{} │", content, " ".repeat(WIDTH - 2 - len));
+    }
+}
+
+fn get_right_border() -> String {
+    "└".to_string() + &"─".repeat(WIDTH) + "┘"
 }
