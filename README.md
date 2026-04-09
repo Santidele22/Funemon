@@ -126,6 +126,20 @@ Mimir/
 - **chrono**: Fechas y tiempos
 - **reqwest**: HTTP client (para Ollama)
 
+## Latest Changes
+
+<!-- AUTO_UPDATE_START -->
+
+### Nuevas Features
+- TUI interactiva
+- Skills para Rust development
+- Auto-update de documentación
+
+### Bug Fixes
+- Ninguno
+
+<!-- AUTO_UPDATE_END -->
+
 ## License
 
 Apache License 2.0 - ver LICENSE file
