@@ -8,6 +8,7 @@ Funemon expose las siguientes skills. Según el contexto, usá la skill apropiad
 |-------|---------------|-------------|
 | `sdd` | "spec", "SDD", "definir", "feature" | Spec-Driven Development: Specify → Plan → Break down → Implement |
 | `tdd` | "test", "coverage", "tdd" | Test-Driven Development: RED → GREEN → REFACTOR |
+| `reflection` | Final de sesión, explicito | Genera reflexión de la sesión |
 | `branch-pr` | "branch", "pr", "push", "merge" | Git branch + PR workflow |
 | `commit-higiene` | "commit", "git" | Conventional Commits |
 | `security` | SIEMPRE activo | Guardrails de seguridad |
@@ -48,10 +49,10 @@ User: "si"
 ## COMPORTAMIENTO
 
 ### Al iniciar una conversación:
-
+ 
 1. **Detectar proyecto** automáticamente (`project-detector`)
-2. **Iniciar sesión**: `memory_session_start(project: "nombre")`
-3. **Cargar contexto**: `memory_context(session_id: "ID")`
+2. **Iniciar sesión**: `funemon_memory_session_start(project: "nombre")`
+3. **Cargar contexto**: `funemon_memory_context(session_id: "ID")`
 4. **Detectar workflow**: usar skill según el tipo de trabajo
 
 ### Durante el trabajo:
@@ -71,16 +72,65 @@ User: "si"
 
 ### Al finalizar:
 
-- `memory_reflect(session_id: "ID")`
+**Generar reflexión** (el agente reflexiona, NO funemon):
 
-## Herramientas de Memoria (sin prefijo mimir_)
+```
+1. El agente analiza el trabajo realizado usando su propio LLM
+2. Genera reflexión en formato Markdown:
+   - Trabajo realizado
+   - Decisiones clave
+   - Lecciones aprendidas
+   - Para próxima sesión
+3. Guarda la reflexión: `memory_store_reflection(session_id, content, agent_name)`
+```
 
-- `memory_session_start` - Iniciar sesión
-- `memory_context` - Cargar contexto
-- `memory_store` - Guardar memoria
-- `memory_reflect` - Generar reflexión
-- `memory_search` - Buscar (solo si el usuario pide)
-- `memory_list_sessions` - Listar sesiones (solo si el usuario pide)
+**Ejemplo de reflexión generada por el agente:**
+
+```markdown
+## Reflexión de Sesión - Tyrion
+
+### Trabajo Realizado
+- Implementé OAuth login con 3 providers
+- Agregú tests: 94% coverage
+
+### Decisiones Clave
+- Usé PKCE por seguridad (vs implicit flow)
+- Prefiero Redis para state storage
+
+### Lecciones Aprendidas
+- PKCE evita token leakage en public clients
+
+### Para Próxima Sesión
+- Agregar rate limiting en /auth/callback
+```
+
+**Guardado:**
+```bash
+funemon_memory_store_reflection(
+  session_id: "uuid",
+  content: "# Reflexión...",
+  agent_name: "tyrion"
+)
+```
+
+## Herramientas de Memoria (con prefijo funemon_)
+
+**Gestión de Sesiones:**
+- `funemon_memory_session_start` - Iniciar sesión
+- `funemon_memory_context` - Cargar contexto
+- `funemon_memory_list_sessions` - Listar sesiones (solo si el usuario pide)
+
+**Gestión de Memorias:**
+- `funemon_memory_store` - Guardar memoria (error, plan, observation, preference)
+- `funemon_memory_search` - Buscar memorias (solo si el usuario pide)
+
+**Gestión de Reflexiones:**
+- `funemon_memory_store_reflection` - Guardar reflexión generada por el agente
+- `funemon_memory_get_reflection` - Obtener reflexión de una sesión
+
+**Limpieza:**
+- `funemon_memory_delete_session` - Eliminar sesión (solo si el usuario pide)
+- `funemon_memory_cleanup` - Limpiar sesiones inactivas (solo si el usuario pide)
 
 ## Proyecto
 

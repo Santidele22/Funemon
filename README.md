@@ -6,14 +6,14 @@
   <img src="https://img.shields.io/badge/MCP-Protocol-blue" alt="MCP Protocol">
 </p>
 
-Funemon es un sistema de memoria persistente diseñado para agentes de programación IA. Mantiene contexto entre sesiones, guarda decisiones, errores y preferencias, y genera reflexiones automáticas.
+Funemon es un sistema de memoria persistente diseñado para agentes de programación IA. Mantiene contexto entre sesiones, guarda decisiones, errores y preferencias, y almacena reflexiones generadas por los agentes.
 
 ## Características
 
 - **Memoria Persistente**: Guarda información entre sesiones de trabajo
 - **MCP Server**: Implementa el Model Context Protocol para integración con agentes IA
 - **Búsqueda Full-Text**: Búsqueda rápida de memorias usando SQLite FTS
-- **Reflexiones Automáticas**: Genera resúmenes inteligente de cada sesión
+- **Reflexiones**: Almacena reflexiones generadas por agentes externos
 - **Tipos de Memoria**: error, plan, observation, preference
 - **Integración OpenCode**: Configuración lista para usar con OpenCode
 
@@ -23,7 +23,6 @@ Funemon es un sistema de memoria persistente diseñado para agentes de programac
 
 - Rust 1.80+
 - SQLite
-- Ollama (para reflexiones)
 
 ### Build
 
@@ -71,8 +70,11 @@ funemon memories store --session-id "uuid" --title "Error resuelto" --type "erro
 # Buscar memorias
 funemon memories search --session-id "uuid" "búsqueda"
 
-# Generar reflexión
-funemon reflection generate --session-id "uuid"
+# Guardar reflexión (generada por el agente)
+funemon reflection store --session-id "uuid" --agent-name "tyrion" --content "Reflexión generada..."
+
+# Ver reflexión de una sesión
+funemon reflection get --session-id "uuid"
 
 # Ver estadísticas
 funemon stats
@@ -87,31 +89,96 @@ funemon mcp
 
 El servidor MCP expone las siguientes tools:
 
+**Gestión de Sesiones:**
 - `memory_session_start` - Iniciar/reanudar sesión
 - `memory_context` - Cargar contexto de sesión
-- `memory_store` - Guardar memoria
-- `memory_reflect` - Generar reflexión
-- `memory_search` - Buscar memorias
 - `memory_list_sessions` - Listar sesiones
+
+**Gestión de Memorias:**
+- `memory_store` - Guardar memoria (error, plan, observation, preference)
+- `memory_search` - Buscar memorias
+
+**Gestión de Reflexiones:**
+- `memory_store_reflection` - Guardar reflexión generada por el agente
+- `memory_get_reflection` - Obtener reflexión de una sesión
+
+**Limpieza:**
+- `memory_delete_session` - Eliminar sesión (soft delete por defecto)
+- `memory_cleanup` - Limpiar sesiones inactivas
 
 ## Configuración de OpenCode
 
 Ver `opencode.json` para la configuración completa. El agente usará las tools de memoria de forma autónoma:
 
-1. Al iniciar: `memory_session_start` + `memory_context`
-2. Durante el trabajo: guardar errores, planes, observaciones, preferencias
-3. Al finalizar: `memory_reflect`
+1. **Al iniciar:**`memory_session_start` → `memory_context`
+2. **Durante el trabajo:** Guardar errores, planes, observaciones, preferencias
+3. **Al finalizar:** Generar reflexión internay guardar con `memory_store_reflection`
+
+## Benchmark y Rendimiento
+
+Funemon ha sido probado en diferentes configuraciones del ecosistema OpenCode. Ver [docs/BENCHMARK.md](docs/BENCHMARK.md) para resultados completos.
+
+### Comparación de Configuraciones
+
+| Configuración | Persistencia | Overhead Inicial | Overhead por Op |
+|---------------|-------------|-----------------|-----------------|
+| **OpenCode Solo** | ❌ No | 0ms | 0ms |
+| **OpenCode + Funemon** | ✅ Sí | 58ms | 12-27ms |
+| **Funemon CLI** | ✅ Sí | 216ms | 15-27ms |
+
+### Tiempos de Operación
+
+| Operación | Funemon CLI | Funemon MCP |
+|-----------|------------|------------|
+| Startup | 216ms | 58ms |
+| Write (avg) | 27ms | 12ms |
+| Context | 15ms | 12ms |
+| Search | 20ms | N/A |
+| Reflexión Store | 14ms | 14ms |
+
+### Uso de Recursos
+
+- **Binario:** 6.6MB
+- **DB Inicial:** 4KB
+- **DB con 100 memorias:** ~50KB
+
+### Ecosistema de Agentes
+
+Funemon se integra con agentes especializados que mantienen memoria específica por área:
+
+| Agente | Especialidad | Rol |
+|--------|-------------|-----|
+| **Tyrion** | Orquestador | Coordina todo |
+| **Magnus** | Backend | APIs, lógica, DB |
+| **Aurora** | Frontend | UI/UX |
+| **Bruno** | QA | Testing, calidad |
+| **Almendra** | Docs | Documentación |
+| **Gabriela** | Security | Seguridad |
+
+**Ver configuración de agentes en:** `~/.config/opencode/agents/`
 
 ## Estructura del Proyecto
 
 ```
 Funemon/
+├── docs/
+│   └── BENCHMARK.md      # Benchmark completo
 ├── funemon-system/
 │   ├── src/
 │   │   ├── cli/          # Interfaz CLI
 │   │   ├── db/           # Base de datos SQLite
 │   │   ├── mcp/          # Servidor MCP
-│   │   └── reflection/   # Generación de reflexiones
+│   ├── Cargo.toml
+│   └── opencode.json     # Configuración OpenCode
+├── skills/               # Skills para agentes
+└── README.md
+```
+Funemon/
+├── funemon-system/
+│   ├── src/
+│   │   ├── cli/          # Interfaz CLI
+│ │   ├── db/           # Base de datos SQLite
+│ │   ├── mcp/          # Servidor MCP
 │   ├── Cargo.toml
 │   └── opencode.json     # Configuración OpenCode
 └── README.md
@@ -124,19 +191,33 @@ Funemon/
 - **tokio**: Runtime async
 - **clap**: CLI parser
 - **chrono**: Fechas y tiempos
-- **reqwest**: HTTP client (para Ollama)
 
 ## Latest Changes
 
 <!-- AUTO_UPDATE_START -->
 
-### Nuevas Features
-- TUI interactiva
-- Skills para Rust development
-- Auto-update de documentación
+### v1.0 - Ecosistema Completo
+
+**Características:**
+- ✅ Sistema de reflexiones externas (sin LLM interno)
+- ✅ Atribución de agentes (`agent_name` en reflexiones)
+- ✅ Ecosistema de agentes especializados (Magnus, Aurora, Bruno, Almendra, Gabriela)
+- ✅ Benchmark del ecosistema OpenCode
+- ✅ Configuración de commits pequeños por agente
+
+**Arquitectura:**
+- Funemon NO tiene LLM interno
+- Los agentes generan reflexiones externamente
+- Funemon solo almacena reflexiones
+
+**Documentación:**
+- [Benchmark completo](docs/BENCHMARK.md)
+- [Skills disponibles](funemon-system/SKILLS.md)
 
 ### Bug Fixes
-- Ninguno
+- Corregido tipo de `importance` (i32 → f32)
+- Corregido timeout en reflexiones
+- Eliminado cliente LLM interno
 
 <!-- AUTO_UPDATE_END -->
 

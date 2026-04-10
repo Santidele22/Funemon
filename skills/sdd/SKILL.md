@@ -144,7 +144,9 @@ Durante SDD:
 - Al resolver bug → guardar como type: "error"
 
 Al cerrar SDD:
-- `memory_reflect(session_id)`
+1. Generar reflexión analizando las memorias de la sesión
+2. Estructurar como JSON: `{content, type, importance, level, source_summary}`
+3. Llamar `memory_store_reflection(session_id, content_json, agent_name)`
 
 ## Triggers
 
