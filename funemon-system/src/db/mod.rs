@@ -12,6 +12,6 @@ pub use memory_ops::{
 
 pub use session_ops::{cleanup_expired_sessions, delete_session, list_sessions, start_session};
 
-pub use reflection_ops::{delete_reflection, generate_reflection, get_reflection_by_session};
+pub use reflection_ops::{delete_reflection, get_reflection_by_session, store_reflection};
 
-pub use models::{Memories, Sessions};
+pub use models::{validate_agent_name, Memories, Sessions};
