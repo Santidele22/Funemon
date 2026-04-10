@@ -97,12 +97,7 @@ pub struct Reflection {
 
 /// Lista de agentes válidos para reflexiones
 pub const VALID_AGENTS: &[&str] = &[
-    "tyrion",
-    "alejandro",
-    "valentina",
-    "ramiro",
-    "almendra",
-    "gabriela",
+    "tyrion", "magnus", "aurora", "bruno", "almendra", "gabriela",
 ];
 
 /// Normaliza y valida el nombre del agente
