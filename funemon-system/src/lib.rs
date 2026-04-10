@@ -2,7 +2,6 @@
 // Export modules for use by funemon-ecosystem
 
 pub mod db;
-pub mod reflection;
 
 // Re-export commonly used items
 pub use db::{
@@ -13,7 +12,6 @@ pub use db::{
     // Reflection operations
     delete_reflection,
     delete_session,
-    generate_reflection,
     get_connection,
     get_memory_by_id,
     get_reflection_by_session,
@@ -25,6 +23,7 @@ pub use db::{
     search_memories,
     start_session,
     store_memory,
+    store_reflection,
 };
 
 /// Check if funemon is properly configured
