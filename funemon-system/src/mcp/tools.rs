@@ -75,7 +75,7 @@ pub struct StoreReflectionParams {
     pub session_id: String,
     #[schemars(description = "Contenido JSON de la reflexión (generado por el agente externo). Debe incluir: content, type, importance, level, source_summary")]
     pub content: String,
-    #[schemars(description = "Nombre del agente (tyrion, alejandro, valentina, ramiro, almendra, gabriela). Default: tyrion")]
+    #[schemars(description = "Nombre del agente (tyrion, magnus, aurora, bruno, almendra, gabriela). Default: tyrion")]
     pub agent_name: String,
 }
 
