@@ -4,7 +4,7 @@ use crate::tui::run_tui;
 use rusqlite::Row;
 use crate::db::{
     cleanup_expired_sessions, delete_memory, delete_reflection, delete_session,
-    get_connection, get_reflection_by_session, get_session_context,
+    get_connection, get_project_context, get_reflection_by_session, get_session_context,
     init_database, list_sessions, search_memories, start_session, store_memory,
     store_reflection,
 };
@@ -210,6 +210,28 @@ fn handle_memory_command(cmd: MemoryCommands) -> Result<(), Box<dyn std::error::
                     "📝 Últimas {} memorias de la sesión {}:",
                     memories.len(),
                     session_id
+                );
+                for memory in memories {
+                    println!(
+                        "   [{}] {} - {}",
+                        timestamp_to_string(memory.created_at),
+                        memory.memory_id,
+                        memory.title
+                    );
+                }
+            }
+        }
+
+        MemoryCommands::ProjectContext { project, limit } => {
+            let memories = get_project_context(&conn, &project, limit)?;
+
+            if memories.is_empty() {
+                println!("📭 No hay memorias para el proyecto '{}'", project);
+            } else {
+                println!(
+                    "📝 Últimas {} memorias del proyecto '{}':",
+                    memories.len(),
+                    project
                 );
                 for memory in memories {
                     println!(

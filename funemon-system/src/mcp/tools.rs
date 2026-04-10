@@ -9,8 +9,8 @@ use serde::Deserialize;
 use crate::db::models::{validate_agent_name, Memories, MemoryType};
 use crate::db::{
     cleanup_expired_sessions, delete_session, get_connection,
-    get_reflection_by_session, get_session_context, list_sessions, search_memories, start_session,
-    store_memory, store_reflection,
+    get_project_context, get_reflection_by_session, get_session_context, list_sessions,
+    search_memories, start_session, store_memory, store_reflection,
 };
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -61,6 +61,14 @@ pub struct SessionContextParams {
     pub session_id: String,
     #[schemars(description = "Número de memorias a retornar")]
     pub limit: Option<usize>,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct ProjectContextParams {
+    #[schemars(description = "Nombre del proyecto")]
+    pub project: String,
+    #[schemars(description = "Número máximo de memorias a retornar")]
+    pub limit: Option<u32>,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -235,6 +243,24 @@ Si retorna vacío, la sesión es nueva.")]
         )]))
     }
     #[tool(description = "\
+[CORE - PASO 2b] Carga las memorias recientes de TODAS las sesiones de un proyecto. \
+Usar cuando se necesita contexto global del proyecto, no solo de la sesión actual. \
+Retorna memorias ordenadas por fecha (más recientes primero).")]
+    pub async fn memory_project_context(
+        &self,
+        Parameters(p): Parameters<ProjectContextParams>,
+    ) -> Result<CallToolResult, McpError> {
+        let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
+
+        let memories = get_project_context(&conn, &p.project, p.limit.unwrap_or(10))
+            .map_err(|e| McpError::internal_error(e.to_string(), None))?;
+
+        let count = memories.len();
+        Ok(CallToolResult::success(vec![Content::text(
+            serde_json::json!({ "context": memories, "count": count }).to_string(),
+        )]))
+    }
+    #[tool(description = "\
 [CORE - PASO 4] Guarda una reflexión generada por el agente externo (Tyrion/opencode-go). \
 Llamar al finalizar la conversación o cuando el usuario indique cierre. \
 El contenido DEBE venir pre-generado por el agente con estructura JSON. \
@@ -354,9 +380,10 @@ Funemon es un sistema de memoria persistente. Seguís estas reglas de forma aut�
 
 **Tier 1 — core** (usar en todo flujo normal, en este orden):
   1. memory_session_start  → siempre primero
-  2. memory_context        → siempre segundo, para cargar contexto
-  3. memory_store          → automáticamente durante el trabajo
-  4. memory_store_reflection → siempre al finalizar (con contenido generado por el agente externo)
+  2. memory_context        → siempre segundo, para cargar contexto de sesión actual
+  3. memory_project_context → opcional, para cargar contexto global del proyecto
+  4. memory_store          → automáticamente durante el trabajo
+  5. memory_store_reflection → siempre al finalizar (con contenido generado por el agente externo)
 
 **Tier 2 — avanzadas** (solo si hay necesidad explícita):
   - memory_search          → el usuario pide buscar en historial
@@ -370,9 +397,10 @@ Regla: si podés resolver algo con tier 1, no uses tier 2.
 ## FLUJO OBLIGATORIO
 
 Al iniciar:
-  → memory_session_start(project) → memory_context(session_id)
+   → memory_session_start(project) → memory_context(session_id)
+   → Opcional: memory_project_context(project, limit) para contexto global del proyecto
 
-Durante el trabajo, guardar automáticamente cuando:
+ Durante el trabajo, guardar automáticamente cuando:
   - Se resuelve un error                      → type: "error"
   - Se toma una decisión o se define un plan  → type: "plan"
   - Se descubre algo relevante                → type: "observation"
