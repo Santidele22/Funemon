@@ -166,7 +166,7 @@ Este skill se activa:
 User: "Quiero agregar OAuth login"
 
 →-autonomous-
-1. INIT: Detectar proyecto → "mimir", iniciar sesión, cargar contexto
+ 1. INIT: Detectar proyecto → "funemon", iniciar sesión, cargar contexto
 2. ANALYZE: "definir feature" → SDD workflow
 3. EXECUTE: 
    - Cargar skill sdd

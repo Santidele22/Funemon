@@ -112,7 +112,7 @@ fn test_float() {
 ```rust
 // tests/integration_test.rs
 
-use mimir::*;
+use funemon::*;
 
 #[test]
 fn test_full_flow() {

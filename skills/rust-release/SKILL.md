@@ -115,7 +115,7 @@ git push --tags
 
 ```toml
 [package]
-name = "mimir"
+name = "funemon"
 version = "0.1.0"
 edition = "2021"
 description = "Sistema de memoria persistente"

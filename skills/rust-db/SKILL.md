@@ -38,7 +38,7 @@ use std::path::PathBuf;
 
 fn get_db_path() -> PathBuf {
     let mut path = dirs::data_dir().unwrap();
-    path.push("mimir/mimir.db");
+    path.push("funemon/funemon.db");
     path
 }
 

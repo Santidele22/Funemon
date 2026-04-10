@@ -171,7 +171,7 @@ fn handle_start(cmd: StartCmd) -> Result<(), Box<dyn std::error::Error>> {
 use clap::{Parser, Subcommand};
 
 #[derive(Parser)]
-#[command(name = "mimir")]
+#[command(name = "funemon")]
 #[command(about = "Sistema de memoria", long_about = None)]
 pub struct Cli {
     #[command(subcommand)]
