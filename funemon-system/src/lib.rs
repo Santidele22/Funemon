@@ -14,6 +14,7 @@ pub use db::{
     delete_session,
     get_connection,
     get_memory_by_id,
+    get_project_context,
     get_reflection_by_session,
     get_session_context,
     init_database,
