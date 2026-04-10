@@ -148,11 +148,19 @@ pub enum MemoryCommands {
 
 #[derive(Subcommand)]
 pub enum ReflectionCommands {
-    /// Genera una reflexión para una sesión
-    Generate {
+    /// Guarda una reflexión generada por agente externo
+    Store {
         /// ID de la sesión
         #[arg(short, long)]
         session_id: String,
+
+        /// Contenido JSON de la reflexión
+        #[arg(short, long)]
+        content: String,
+
+        /// Nombre del agente que genera la reflexión (default: tyrion)
+        #[arg(short, long, default_value = "tyrion")]
+        agent_name: String,
     },
 
     /// Obtiene la reflexión de una sesión

@@ -6,11 +6,11 @@ use rmcp::{
 };
 use serde::Deserialize;
 
-use crate::db::models::{Memories, MemoryType};
+use crate::db::models::{validate_agent_name, Memories, MemoryType};
 use crate::db::{
-    cleanup_expired_sessions, delete_session, generate_reflection, get_connection,
+    cleanup_expired_sessions, delete_session, get_connection,
     get_reflection_by_session, get_session_context, list_sessions, search_memories, start_session,
-    store_memory,
+    store_memory, store_reflection,
 };
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -67,6 +67,16 @@ pub struct SessionContextParams {
 pub struct SessionIdParams {
     #[schemars(description = "ID de la sesión")]
     pub session_id: String,
+}
+
+#[derive(Debug, Deserialize, schemars::JsonSchema)]
+pub struct StoreReflectionParams {
+    #[schemars(description = "ID de la sesión")]
+    pub session_id: String,
+    #[schemars(description = "Contenido JSON de la reflexión (generado por el agente externo). Debe incluir: content, type, importance, level, source_summary")]
+    pub content: String,
+    #[schemars(description = "Nombre del agente (tyrion, alejandro, valentina, ramiro, almendra, gabriela). Default: tyrion")]
+    pub agent_name: String,
 }
 
 #[derive(Debug, Deserialize, schemars::JsonSchema)]
@@ -225,22 +235,28 @@ Si retorna vacío, la sesión es nueva.")]
         )]))
     }
     #[tool(description = "\
-[CORE - PASO 4] Genera una reflexión consolidada de la sesión actual. \
+[CORE - PASO 4] Guarda una reflexión generada por el agente externo (Tyrion/opencode-go). \
 Llamar al finalizar la conversación o cuando el usuario indique cierre. \
-Produce un resumen de alto nivel de lo aprendido.")]
-    pub async fn memory_reflect(
+El contenido DEBE venir pre-generado por el agente con estructura JSON. \
+Parámetro agent_name: nombre del agente (default: tyrion).")]
+    pub async fn memory_store_reflection(
         &self,
-        Parameters(p): Parameters<SessionIdParams>,
+        Parameters(p): Parameters<StoreReflectionParams>,
     ) -> Result<CallToolResult, McpError> {
         let conn = get_connection().map_err(|e: rusqlite::Error| McpError::internal_error(e.to_string(), None))?;
 
-        let reflection = generate_reflection(&conn, &p.session_id)
+        // Validate agent_name
+        let agent_name = validate_agent_name(&p.agent_name)
+            .map_err(|e| McpError::internal_error(e, None))?;
+
+        let reflection = store_reflection(&conn, &p.session_id, &p.content, &agent_name)
             .map_err(|e| McpError::internal_error(e.to_string(), None))?;
 
         Ok(CallToolResult::success(vec![Content::text(
             serde_json::json!({
                 "success": true,
                 "reflection_id": reflection.reflection_id,
+                "agent_name": reflection.agent_name,
                 "content": reflection.content,
                 "type": reflection.r#type,
                 "importance": reflection.importance,
@@ -250,9 +266,9 @@ Produce un resumen de alto nivel de lo aprendido.")]
         )]))
     }
     #[tool(description = "\
-[AVANZADA] Recupera la reflexión ya generada de una sesión específica. \
+[AVANZADA] Recupera la reflexión ya guardada de una sesión específica. \
 Usar solo si el usuario pide ver el resumen de una sesión anterior. \
-Para la sesión actual, usar memory_reflect en su lugar.")]
+Para guardar una nueva reflexión, usar memory_store_reflection.")]
     pub async fn memory_get_reflection(
         &self,
         Parameters(p): Parameters<SessionIdParams>,
@@ -263,7 +279,20 @@ Para la sesión actual, usar memory_reflect en su lugar.")]
             .map_err(|e| McpError::internal_error(e.to_string(), None))?
         {
             Some(reflection) => Ok(CallToolResult::success(vec![Content::text(
-                serde_json::json!({ "exists": true, "reflection": reflection }).to_string(),
+                serde_json::json!({
+                    "exists": true,
+                    "reflection": {
+                        "reflection_id": reflection.reflection_id,
+                        "agent_name": reflection.agent_name,
+                        "content": reflection.content,
+                        "type": reflection.r#type,
+                        "importance": reflection.importance,
+                        "level": reflection.level,
+                        "source_summary": reflection.source_summary,
+                        "created_at": reflection.created_at
+                    }
+                })
+                .to_string(),
             )])),
             None => Ok(CallToolResult::success(vec![Content::text(
                 serde_json::json!({
@@ -327,7 +356,7 @@ Funemon es un sistema de memoria persistente. Seguís estas reglas de forma aut�
   1. memory_session_start  → siempre primero
   2. memory_context        → siempre segundo, para cargar contexto
   3. memory_store          → automáticamente durante el trabajo
-  4. memory_reflect        → siempre al finalizar
+  4. memory_store_reflection → siempre al finalizar (con contenido generado por el agente externo)
 
 **Tier 2 — avanzadas** (solo si hay necesidad explícita):
   - memory_search          → el usuario pide buscar en historial
@@ -349,8 +378,9 @@ Durante el trabajo, guardar automáticamente cuando:
   - Se descubre algo relevante                → type: "observation"
   - El usuario expresa una preferencia        → type: "preference"
 
-Al finalizar:
-  → memory_reflect(session_id)
+Al finalizar:→ memory_store_reflection(session_id, content, agent_name)
+
+El parámetro 'content' es un JSON string generado por el agente externo (Tyrion/opencode-go) con estructura:{"content": "...", "type": "pattern|principle|warning", "importance": 0.85, "level": "Fact|Pattern|Principle", "source_summary": "..."}
 
 ## REGLAS DE COMPORTAMIENTO
 

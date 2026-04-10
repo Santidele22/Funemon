@@ -4,8 +4,9 @@ use crate::tui::run_tui;
 use rusqlite::Row;
 use crate::db::{
     cleanup_expired_sessions, delete_memory, delete_reflection, delete_session,
-    generate_reflection, get_connection, get_reflection_by_session, get_session_context,
+    get_connection, get_reflection_by_session, get_session_context,
     init_database, list_sessions, search_memories, start_session, store_memory,
+    store_reflection,
 };
 
 pub async fn run_cli(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
@@ -246,11 +247,19 @@ fn handle_reflection_command(cmd: ReflectionCommands) -> Result<(), Box<dyn std:
     let conn = get_connection()?;
 
     match cmd {
-        ReflectionCommands::Generate { session_id } => {
-            println!("🔄 Generando reflexión para la sesión {}...", session_id);
-            let reflection = generate_reflection(&conn, &session_id)?;
-            println!("✅ Reflexión generada:");
+        ReflectionCommands::Store {
+            session_id,
+            content,
+            agent_name,
+        } => {
+            println!(
+                "💾 Guardando reflexión para la sesión {} (agente: {})...",
+                session_id, agent_name
+            );
+            let reflection = store_reflection(&conn, &session_id, &content, &agent_name)?;
+            println!("✅ Reflexión guardada:");
             println!("   ID: {}", reflection.reflection_id);
+            println!("   Agente: {}", reflection.agent_name);
             println!("   Tipo: {}", reflection.r#type);
             println!("   Importancia: {:.2}", reflection.importance);
             println!("   Nivel: {}", reflection.level);
@@ -262,6 +271,7 @@ fn handle_reflection_command(cmd: ReflectionCommands) -> Result<(), Box<dyn std:
                 Some(reflection) => {
                     println!("📋 Reflexión de la sesión {}:", session_id);
                     println!("   ID: {}", reflection.reflection_id);
+                    println!("   Agente: {}", reflection.agent_name);
                     println!("   Tipo: {}", reflection.r#type);
                     println!("   Importancia: {:.2}", reflection.importance);
                     println!("   Nivel: {}", reflection.level);
@@ -273,7 +283,7 @@ fn handle_reflection_command(cmd: ReflectionCommands) -> Result<(), Box<dyn std:
                 None => {
                     println!("📭 No hay reflexión para la sesión {}", session_id);
                     println!(
-                        "   Ejecuta 'funemon reflection generate --session-id {}' para generar una",
+                        "   Ejecuta 'funemon reflection store --session-id {} --content \"{{...}}\"' para guardar una",
                         session_id
                     );
                 }
