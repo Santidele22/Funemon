@@ -20,5 +20,5 @@ jobs:
           git config --local user.email "bot@github.com"
           git config --local user.name "GitHub Bot"
           git add -A
-          git commit -m "docs: auto update" || echo "nothing to commit"
+          git commit -m "docs: auto update [skip ci]" || echo "nothing to commit"
           git push || echo "nothing to push"
