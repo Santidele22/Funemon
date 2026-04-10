@@ -6,14 +6,14 @@
   <img src="https://img.shields.io/badge/MCP-Protocol-blue" alt="MCP Protocol">
 </p>
 
-Funemon es un sistema de memoria persistente diseñado para agentes de programación IA. Mantiene contexto entre sesiones, guarda decisiones, errores y preferencias, y genera reflexiones automáticas.
+Funemon es un sistema de memoria persistente diseñado para agentes de programación IA. Mantiene contexto entre sesiones, guarda decisiones, errores y preferencias, y almacena reflexiones generadas por los agentes.
 
 ## Características
 
 - **Memoria Persistente**: Guarda información entre sesiones de trabajo
 - **MCP Server**: Implementa el Model Context Protocol para integración con agentes IA
 - **Búsqueda Full-Text**: Búsqueda rápida de memorias usando SQLite FTS
-- **Reflexiones Automáticas**: Genera resúmenes inteligente de cada sesión
+- **Reflexiones**: Almacena reflexiones generadas por agentes externos
 - **Tipos de Memoria**: error, plan, observation, preference
 - **Integración OpenCode**: Configuración lista para usar con OpenCode
 
@@ -23,7 +23,6 @@ Funemon es un sistema de memoria persistente diseñado para agentes de programac
 
 - Rust 1.80+
 - SQLite
-- Ollama (para reflexiones)
 
 ### Build
 
@@ -71,8 +70,11 @@ funemon memories store --session-id "uuid" --title "Error resuelto" --type "erro
 # Buscar memorias
 funemon memories search --session-id "uuid" "búsqueda"
 
-# Generar reflexión
-funemon reflection generate --session-id "uuid"
+# Guardar reflexión (generada por el agente)
+funemon reflection store --session-id "uuid" --agent-name "tyrion" --content "Reflexión generada..."
+
+# Ver reflexión de una sesión
+funemon reflection get --session-id "uuid"
 
 # Ver estadísticas
 funemon stats
@@ -87,20 +89,30 @@ funemon mcp
 
 El servidor MCP expone las siguientes tools:
 
+**Gestión de Sesiones:**
 - `memory_session_start` - Iniciar/reanudar sesión
 - `memory_context` - Cargar contexto de sesión
-- `memory_store` - Guardar memoria
-- `memory_reflect` - Generar reflexión
-- `memory_search` - Buscar memorias
 - `memory_list_sessions` - Listar sesiones
+
+**Gestión de Memorias:**
+- `memory_store` - Guardar memoria (error, plan, observation, preference)
+- `memory_search` - Buscar memorias
+
+**Gestión de Reflexiones:**
+- `memory_store_reflection` - Guardar reflexión generada por el agente
+- `memory_get_reflection` - Obtener reflexión de una sesión
+
+**Limpieza:**
+- `memory_delete_session` - Eliminar sesión (soft delete por defecto)
+- `memory_cleanup` - Limpiar sesiones inactivas
 
 ## Configuración de OpenCode
 
 Ver `opencode.json` para la configuración completa. El agente usará las tools de memoria de forma autónoma:
 
-1. Al iniciar: `memory_session_start` + `memory_context`
-2. Durante el trabajo: guardar errores, planes, observaciones, preferencias
-3. Al finalizar: `memory_reflect`
+1. **Al iniciar:**`memory_session_start` → `memory_context`
+2. **Durante el trabajo:** Guardar errores, planes, observaciones, preferencias
+3. **Al finalizar:** Generar reflexión internay guardar con `memory_store_reflection`
 
 ## Estructura del Proyecto
 
@@ -109,9 +121,8 @@ Funemon/
 ├── funemon-system/
 │   ├── src/
 │   │   ├── cli/          # Interfaz CLI
-│   │   ├── db/           # Base de datos SQLite
-│   │   ├── mcp/          # Servidor MCP
-│   │   └── reflection/   # Generación de reflexiones
+│ │   ├── db/           # Base de datos SQLite
+│ │   ├── mcp/          # Servidor MCP
 │   ├── Cargo.toml
 │   └── opencode.json     # Configuración OpenCode
 └── README.md
@@ -124,7 +135,6 @@ Funemon/
 - **tokio**: Runtime async
 - **clap**: CLI parser
 - **chrono**: Fechas y tiempos
-- **reqwest**: HTTP client (para Ollama)
 
 ## Latest Changes
 
