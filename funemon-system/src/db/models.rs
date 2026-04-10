@@ -88,8 +88,32 @@ pub struct Reflection {
     pub session_id: String,
     pub content: String,
     pub r#type: String,
-    pub importance: i32,
+    pub importance: f32,
     pub level: String,
     pub source_summary: Option<String>,
+    pub agent_name: String,
     pub created_at: i64,
+}
+
+/// Lista de agentes válidos para reflexiones
+pub const VALID_AGENTS: &[&str] = &[
+    "tyrion",
+    "alejandro",
+    "valentina",
+    "ramiro",
+    "almendra",
+    "gabriela",
+];
+
+/// Normaliza y valida el nombre del agente
+pub fn validate_agent_name(agent_name: &str) -> Result<String, String> {
+    let normalized = agent_name.to_lowercase();
+    if VALID_AGENTS.contains(&normalized.as_str()) {
+        Ok(normalized)
+    } else {
+        Err(format!(
+            "agent_name inválido '{}'. Valores permitidos: {:?}",
+            agent_name, VALID_AGENTS
+        ))
+    }
 }

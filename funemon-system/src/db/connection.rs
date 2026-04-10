@@ -49,12 +49,16 @@ fn init_database_inner(conn: &Connection) -> Result<()> {
             importance REAL NOT NULL,
             level TEXT NOT NULL,
             source_summary TEXT,
+            agent_name TEXT NOT NULL DEFAULT 'tyrion',
             created_at INTEGER NOT NULL,
             deleted_at INTEGER,
             FOREIGN KEY (session_id) REFERENCES sessions(session_id)
         )",
         (),
     )?;
+
+    // Migración: agregar agent_name a tablas existentes
+    migrate_add_agent_name(&conn)?;
 
     conn.execute(
         "CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
@@ -123,4 +127,26 @@ pub fn get_connection() -> Result<Arc<Mutex<Connection>>> {
             Some("Database not initialized".to_string()),
         )
     })
+}
+
+/// Migración: agregar columna agent_name a reflections si no existe
+fn migrate_add_agent_name(conn: &Connection) -> Result<()> {
+    // Verificar si la columna ya existe
+    let column_exists: bool = conn
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('reflections') WHERE name='agent_name'",
+            [],
+            |row| row.get::<_, i32>(0),
+        )
+        .map(|count| count > 0)?;
+
+    if !column_exists {
+        conn.execute(
+            "ALTER TABLE reflections ADD COLUMN agent_name TEXT NOT NULL DEFAULT 'tyrion'",
+            [],
+        )?;
+        eprintln!("✅ Migración: columna agent_name agregada a reflections");
+    }
+
+    Ok(())
 }
