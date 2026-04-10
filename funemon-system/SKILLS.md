@@ -95,17 +95,17 @@ Output:
 - Agregar circuit breaker para OAuth APIs
 ```
 
-#### Ejemplo 3: Alejandro reflexiona después de tests
+#### Ejemplo 3: Magnus reflexiona después de tests
 
 ```yaml
-# Contexto: Alejandro terminó de implementar una skill
+# Contexto: Magnus terminó de implementar una skill
 
 Agente: "Terminé la skill de reflexiones. Tests pasando."
 
-→ Llama: skill_reflection(agent_name: "alejandro")
+→ Llama: skill_reflection(agent_name: "magnus")
 
 Output:
-## Reflexión de Sesión - Alejandro
+## Reflexión de Sesión - Magnus
 
 ### Trabajo Realizado
 - Implementé skill_reflection como skill autónoma
@@ -126,17 +126,17 @@ Output:
 - Considerar skill "memory-cleanup" similar
 ```
 
-#### Ejemplo 4: Ramiro reflexiona después de debugging
+#### Ejemplo 4: Bruno reflexiona después de debugging
 
 ```yaml
-# Contexto: Ramiro encontró y fixeó un bug difícil
+# Contexto: Bruno encontró y fixeó un bug difícil
 
 Agente: "Encontré el bug en el reflection engine..."
 
-→ Llama: skill_reflection(agent_name: "ramiro")
+→ Llama: skill_reflection(agent_name: "bruno")
 
 Output:
-## Reflexión de Sesión - Ramiro
+## Reflexión de Sesión - Bruno
 
 ### Bug Resuelto
 - Bug crítico: reflexiones duplicadas en DB
@@ -392,8 +392,8 @@ Instrucciones detalladas para el agente enMarkdown.
 | Agente | Skills Principales |
 |--------|-------------------|
 | **Tyrion** | `sdd`, `tdd`, `branch-pr` |
-| **Alejandro** | `autonomous`, `commit-higiene` |
-| **Ramiro** | `security`, `architecture-guardrails` |
+| **Magnus** | `autonomous`, `commit-higiene` |
+| **Bruno** | `security`, `architecture-guardrails` |
 | **Almendra** | `reflection`, `project-detector` |
 
 ---
