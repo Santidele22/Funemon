@@ -19,7 +19,7 @@ const SEARCH_MEMORIES_BASE: &str = "
            m.what, m.why, m.where_field, m.learned, m.deleted_at
     FROM memories m
     JOIN memories_fts fts ON m.rowid = fts.rowid
-    WHERE fts MATCH ?1
+    WHERE memories_fts MATCH ?1
 ";
 
 const SOFT_DELETE_MEMORY: &str = "
@@ -110,7 +110,7 @@ pub fn search_memories(
     }
 
     sql.push_str(" AND m.deleted_at IS NULL");
-    sql.push_str(" ORDER BY fts.score DESC");
+    sql.push_str(" ORDER BY rank DESC");
     sql.push_str(" LIMIT ?3");
 
     let mut stmt = conn.prepare(&sql)?;
