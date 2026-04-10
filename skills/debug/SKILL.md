@@ -169,7 +169,17 @@ memory_store(
   learned: "Fix: [cómo se resolvió]"
 )
 
-memory_reflect(session_id: "ID")
+# Generar reflexión externamente y guardar:
+1. Analizar las memorias de la sesión
+2. Estructurar como JSON:
+   {
+     "content": "Lección aprendida del debugging",
+     "type": "pattern | principle | insight",
+     "importance": 0.85,
+     "level": "Principle | Pattern | Insight",
+     "source_summary": "Debug session de [error]"
+   }
+3. Llamar: memory_store_reflection(session_id, content_json, agent_name)
 ```
 
 ## Errores Comunes
@@ -236,7 +246,7 @@ Este skill se activa cuando:
 |------|--------|
 | ANALYZE | memory_store (error info) |
 | FIX | - |
-| REFLECT | memory_reflect |
+| REFLECT | memory_store_reflection (generar externamente) |
 
 ## Autonomía
 

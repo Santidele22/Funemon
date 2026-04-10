@@ -79,7 +79,17 @@ memory_store(
 **Cuando el usuario dice "eso es todo", " gracias", "cerrá", "fin":**
 
 ```bash
-memory_reflect(session_id: "ID")
+# 1. Generar reflexión externamente (analizar memorias)
+# 2. Estructurar como JSON:
+{
+  "content": "Resumen consolidado de la sesión",
+  "type": "principle | pattern | insight",
+  "importance": 0.85,
+  "level": "Principle | Pattern | Insight",
+  "source_summary": "Sesión de [tipo de trabajo]"
+}
+# 3. Guardar:
+memory_store_reflection(session_id: "ID", content_json, agent_name: "autonomous")
 ```
 
 ## Reglas de Autonomía
@@ -142,7 +152,7 @@ Durante SDD:
 | Error resuelto | `memory_store` | error |
 | Edge case nuevo | `memory_store` | observation |
 | Preferencia usuario | `memory_store` | preference |
-| Fin de sesión | `memory_reflect` | - |
+| Fin de sesión | `memory_store_reflection` | - (generar externamente) |
 
 ## Triggers
 
