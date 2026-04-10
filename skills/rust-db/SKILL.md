@@ -37,13 +37,15 @@ fn get_connection() -> Result<Arc<Mutex<Connection>>> {
 use std::path::PathBuf;
 
 fn get_db_path() -> PathBuf {
-    let mut path = dirs::data_dir().unwrap();
-    path.push("funemon/funemon.db");
+    let mut path = dirs::home_dir().expect("No home dir");
+    path.push(".local/share/funemon/funemon.db");
     path
 }
 
 fn init_db() -> Result<()> {
-    let conn = Connection::open(get_db_path())?;
+    let db_path = get_db_path();
+    std::fs::create_dir_all(db_path.parent().unwrap()).expect("Failed to create db directory");
+    let conn = Connection::open(&db_path)?;
     // Configuracion
     conn.pragma_update(None, "journal_mode", "WAL")?;
     Ok(())
