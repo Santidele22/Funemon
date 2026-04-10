@@ -134,6 +134,16 @@ pub enum MemoryCommands {
         limit: usize,
     },
 
+    /// Lista las memorias de todas las sesiones de un proyecto
+    ProjectContext {
+        /// Nombre del proyecto
+        project: String,
+
+        /// Límite de resultados (default: 10)
+        #[arg(short, long, default_value = "10")]
+        limit: u32,
+    },
+
     /// Elimina una memoria
     Delete {
         /// ID de la memoria

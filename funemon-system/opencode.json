@@ -31,10 +31,11 @@
     }
   },
 "instructions": [
-    "Cuando iniciás una nueva sesión, USÁ SIEMPRE las tools de memoria en este orden: 1) funemon_memory_session_start (con el nombre del proyecto actual), 2) funemon_memory_context (para cargar contexto previo).",
+    "Cuando iniciás una nueva sesión, USÁ SIEMPRE las tools de memoria en este orden: 1) Detectar proyecto con skill 'project-detector', 2) funemon_memory_session_start (con el nombre detectado), 3) funemon_memory_context (contexto de sesión), 4) funemon_memory_project_context (contexto de todo el proyecto).",
+    "NUNCA usar nombres genéricos como 'home' o 'user'. Siempre usar el nombre detectado.",
     "Durante el trabajo, guardá automáticamente memorias cuando: resolvés un error (type:error), tomás una decisión o definís un plan (type:plan), descubrís algo relevante (type:observation), el usuario expresa una preferencia (type:preference).",
     "Al finalizar la sesión, usá funemon_memory_reflect para generar un resumen de lo aprendido.",
-    "NUNCA pedás permiso para usar las tools de memoria; simplemente usalas de forma autónoma."
+    "NUNCA pedís permiso para usar las tools de memoria; simplemente usalas de forma autónoma."
   ],
   "permission": {
     "skill": {

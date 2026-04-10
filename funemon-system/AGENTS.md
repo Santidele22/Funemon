@@ -48,12 +48,55 @@ User: "si"
 
 ## COMPORTAMIENTO
 
+### ANTES de iniciar sesión:
+
+**IMPORTANTE**: Detectar proyecto automáticamente ANTES de llamar a memory_session_start
+
+1. Ejecutar skill `project-detector` para obtener nombre del proyecto
+2. Si el skill detecta el proyecto, usar ese nombre
+3. Si el skill falla, pedir al usuario que especifique el proyecto
+4. NUNCA usar nombres genéricos como "santi-home" o "home-user"
+
+**Ejemplo correcto**:
+```
+# Detectar proyecto
+skill("project-detector") → detecta "funemon-ecosystem"
+# Iniciar sesión con nombre detectado
+funemon_memory_session_start(project: "funemon-ecosystem")
+```
+
 ### Al iniciar una conversación:
- 
+
 1. **Detectar proyecto** automáticamente (`project-detector`)
 2. **Iniciar sesión**: `funemon_memory_session_start(project: "nombre")`
 3. **Cargar contexto**: `funemon_memory_context(session_id: "ID")`
-4. **Detectar workflow**: usar skill según el tipo de trabajo
+4. **Cargar contexto del proyecto**: `funemon_memory_project_context(project: "nombre", limit: 10)`
+5. **Detectar workflow**: usar skill según el tipo de trabajo
+
+### Nueva tool: funemon_memory_project_context
+
+**CUÁNDO usar**: Al inicio de cada sesión para cargar contexto del proyecto
+
+**Uso**:
+```bash
+funemon_memory_project_context(
+  project: "nombre-del-proyecto",
+  limit: 10  # opcional, default 10
+)
+```
+
+**Diferencia con memory_context**:
+- `memory_context(session_id)` → solo memorias de ESTA sesión
+- `memory_project_context(project, limit)` → memorias de TODAS las sesiones del proyecto
+
+**Ejemplo**:
+```bash
+# Inicio de sesión
+session_id = funemon_memory_session_start(project: "funemon-ecosystem")# Cargar contexto del proyecto (no solo esta sesión)
+project_memories = funemon_memory_project_context("funemon-ecosystem", limit: 10)
+
+# Ahora tengo contexto de trabajo anterior
+```
 
 ### Durante el trabajo:
 
@@ -117,7 +160,8 @@ funemon_memory_store_reflection(
 
 **Gestión de Sesiones:**
 - `funemon_memory_session_start` - Iniciar sesión
-- `funemon_memory_context` - Cargar contexto
+- `funemon_memory_context` - Cargar contexto de sesión actual
+- `funemon_memory_project_context` - Cargar contexto de todo el proyecto (NUEVO)
 - `funemon_memory_list_sessions` - Listar sesiones (solo si el usuario pide)
 
 **Gestión de Memorias:**

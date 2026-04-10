@@ -39,6 +39,16 @@ const GET_SESSION_MEMORIES: &str = "
     LIMIT ?2
 ";
 
+const GET_PROJECT_MEMORIES: &str = "
+    SELECT m.memory_id, m.session_id, m.created_at, m.title, m.type,
+           m.what, m.why, m.where_field, m.learned, m.deleted_at
+    FROM memories m
+    JOIN sessions s ON m.session_id = s.session_id
+    WHERE s.project = ?1 AND m.deleted_at IS NULL AND s.deleted_at IS NULL
+    ORDER BY m.created_at DESC
+    LIMIT ?2
+";
+
 fn unix_timestamp() -> i64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -151,6 +161,21 @@ pub fn get_session_context(
 
     let memories = stmt
         .query_map(params![session_id, limit as i64], memory_from_row)?
+        .collect::<Result<Vec<_>, _>>()?;
+
+    Ok(memories)
+}
+
+pub fn get_project_context(
+    conn: &Arc<Mutex<rusqlite::Connection>>,
+    project: &str,
+    limit: u32,
+) -> Result<Vec<Memories>> {
+    let conn = conn.lock().unwrap();
+    let mut stmt = conn.prepare(GET_PROJECT_MEMORIES)?;
+
+    let memories = stmt
+        .query_map(params![project, limit as i64], memory_from_row)?
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(memories)
