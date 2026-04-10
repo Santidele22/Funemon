@@ -114,8 +114,64 @@ Ver `opencode.json` para la configuración completa. El agente usará las tools 
 2. **Durante el trabajo:** Guardar errores, planes, observaciones, preferencias
 3. **Al finalizar:** Generar reflexión internay guardar con `memory_store_reflection`
 
+## Benchmark y Rendimiento
+
+Funemon ha sido probado en diferentes configuraciones del ecosistema OpenCode. Ver [docs/BENCHMARK.md](docs/BENCHMARK.md) para resultados completos.
+
+### Comparación de Configuraciones
+
+| Configuración | Persistencia | Overhead Inicial | Overhead por Op |
+|---------------|-------------|-----------------|-----------------|
+| **OpenCode Solo** | ❌ No | 0ms | 0ms |
+| **OpenCode + Funemon** | ✅ Sí | 58ms | 12-27ms |
+| **Funemon CLI** | ✅ Sí | 216ms | 15-27ms |
+
+### Tiempos de Operación
+
+| Operación | Funemon CLI | Funemon MCP |
+|-----------|------------|------------|
+| Startup | 216ms | 58ms |
+| Write (avg) | 27ms | 12ms |
+| Context | 15ms | 12ms |
+| Search | 20ms | N/A |
+| Reflexión Store | 14ms | 14ms |
+
+### Uso de Recursos
+
+- **Binario:** 6.6MB
+- **DB Inicial:** 4KB
+- **DB con 100 memorias:** ~50KB
+
+### Ecosistema de Agentes
+
+Funemon se integra con agentes especializados que mantienen memoria específica por área:
+
+| Agente | Especialidad | Rol |
+|--------|-------------|-----|
+| **Tyrion** | Orquestador | Coordina todo |
+| **Magnus** | Backend | APIs, lógica, DB |
+| **Aurora** | Frontend | UI/UX |
+| **Bruno** | QA | Testing, calidad |
+| **Almendra** | Docs | Documentación |
+| **Gabriela** | Security | Seguridad |
+
+**Ver configuración de agentes en:** `~/.config/opencode/agents/`
+
 ## Estructura del Proyecto
 
+```
+Funemon/
+├── docs/
+│   └── BENCHMARK.md      # Benchmark completo
+├── funemon-system/
+│   ├── src/
+│   │   ├── cli/          # Interfaz CLI
+│   │   ├── db/           # Base de datos SQLite
+│   │   ├── mcp/          # Servidor MCP
+│   ├── Cargo.toml
+│   └── opencode.json     # Configuración OpenCode
+├── skills/               # Skills para agentes
+└── README.md
 ```
 Funemon/
 ├── funemon-system/
@@ -140,13 +196,28 @@ Funemon/
 
 <!-- AUTO_UPDATE_START -->
 
-### Nuevas Features
-- TUI interactiva
-- Skills para Rust development
-- Auto-update de documentación
+### v1.0 - Ecosistema Completo
+
+**Características:**
+- ✅ Sistema de reflexiones externas (sin LLM interno)
+- ✅ Atribución de agentes (`agent_name` en reflexiones)
+- ✅ Ecosistema de agentes especializados (Magnus, Aurora, Bruno, Almendra, Gabriela)
+- ✅ Benchmark del ecosistema OpenCode
+- ✅ Configuración de commits pequeños por agente
+
+**Arquitectura:**
+- Funemon NO tiene LLM interno
+- Los agentes generan reflexiones externamente
+- Funemon solo almacena reflexiones
+
+**Documentación:**
+- [Benchmark completo](docs/BENCHMARK.md)
+- [Skills disponibles](funemon-system/SKILLS.md)
 
 ### Bug Fixes
-- Ninguno
+- Corregido tipo de `importance` (i32 → f32)
+- Corregido timeout en reflexiones
+- Eliminado cliente LLM interno
 
 <!-- AUTO_UPDATE_END -->
 
