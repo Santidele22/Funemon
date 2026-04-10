@@ -70,6 +70,9 @@ funemon memories store --session-id "uuid" --title "Error resuelto" --type "erro
 # Buscar memorias
 funemon memories search --session-id "uuid" "búsqueda"
 
+# Cargar contexto del proyecto (NUEVO)
+funemon project-context "mi-proyecto" --limit 10
+
 # Guardar reflexión (generada por el agente)
 funemon reflection store --session-id "uuid" --agent-name "tyrion" --content "Reflexión generada..."
 
@@ -92,6 +95,7 @@ El servidor MCP expone las siguientes tools:
 **Gestión de Sesiones:**
 - `memory_session_start` - Iniciar/reanudar sesión
 - `memory_context` - Cargar contexto de sesión
+- `memory_project_context` - Cargar contexto de todo el proyecto (NUEVO)
 - `memory_list_sessions` - Listar sesiones
 
 **Gestión de Memorias:**
@@ -105,6 +109,21 @@ El servidor MCP expone las siguientes tools:
 **Limpieza:**
 - `memory_delete_session` - Eliminar sesión (soft delete por defecto)
 - `memory_cleanup` - Limpiar sesiones inactivas
+
+### Ejemplo de Integración con OpenCode
+
+```bash
+# Detectar proyecto automáticamente
+funemon --detect-project# → funemon-ecosystem
+
+# Iniciar sesión
+funemon session start --project funemon-ecosystem
+
+# Cargar contexto del proyecto (NUEVO)
+funemon project-context funemon-ecosystem --limit 10
+
+# Guardar memoria
+funemon memories store --session-id <uuid> --title "Bugfix" --type error --what "Error en auth" --why "Solución aplicada"```
 
 ## Configuración de OpenCode
 
