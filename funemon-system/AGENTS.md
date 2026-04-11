@@ -193,3 +193,14 @@ Extraer del path actual del directorio o buscar:
 5. **Reflexionar al cerrar**
 6. **Seguir conventional commits**
 7. **No force push a main/master**
+
+## Reglas de Git y Merge (PARA TYRION)
+
+### Regla Obligatoria para TODOS los merges:
+1. **NUNCA** pushear a `main` directamente
+2. **SIEMPRE** crear rama feature: `git checkout -b feat/descripcion`
+3. Trabajar en la rama
+4. **SIEMPRE** generar PR: `gh pr create`
+5. **PEDIR PERMISO**: "¿Apruebas?" ANTES de merge
+6. **Solo mergear con tu aprobación explícita**
+7. **NUNCA** hacer merge sin tu OK
