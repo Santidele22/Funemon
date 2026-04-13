@@ -21,8 +21,10 @@ Funemon es un sistema de memoria persistente diseñado para agentes de programac
 
 ### Requisitos
 
-- Rust 1.80+
+- Rust 1.75+ (recomendado 1.85+ para mejor compatibilidad)
 - SQLite
+
+> ⚠️ **Problemas de compilación?** Si encuentras errores como "feature `edition2024` is required", ver [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) para soluciones.
 
 ### Build
 
