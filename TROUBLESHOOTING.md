@@ -57,15 +57,47 @@ cargo clean
 cargo build --release
 ```
 
-### Error de OpenSSL
+### OpenSSL Not Found
+
+Si ves el error:
+```
+Could not find openssl via pkg-config:
+Package 'openssl', required by 'virtual:world', not found
+```
+
+**Causa:**
+El sistema no tiene instalados los paquetes de desarrollo de OpenSSL necesarios para compilar dependencias como `native-tls` o `openssl-sys`.
+
+**Solución:**
+
+Instala los paquetes de desarrollo de OpenSSL según tu sistema operativo:
 
 ```bash
 # Ubuntu/Debian
-sudo apt-get install -y libssl-dev pkg-config
+sudo apt update && sudo apt install libssl-dev pkg-config
+
+# Fedora/RHEL
+sudo dnf install openssl-devel pkg-config
 
 # macOS
-brew install openssl
+brew install openssl pkg-config
+
+# Arch Linux
+sudo pacman -S openssl pkg-config
+```
+
+Después de instalar, vuelve a compilar:
+
+```bash
+cargo build --release
+```
+
+**Nota para macOS:**
+Si después de instalar siguen habiendo problemas, configura las variables de entorno:
+```bash
 export OPENSSL_DIR=/usr/local/opt/openssl
+export OPENSSL_LIB_DIR=/usr/local/opt/openssl/lib
+export OPENSSL_INCLUDE_DIR=/usr/local/opt/openssl/include
 ```
 
 ### Error de SQLite
