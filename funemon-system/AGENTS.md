@@ -119,6 +119,36 @@ project_memories = funemon_memory_project_context("funemon-ecosystem", limit: 10
 
 ```
 1. El agente analiza el trabajo realizado usando su propio LLM
+2. Genera reflexión en formato JSON con esta estructura:
+   - content: Resumen consolidado de la sesión
+   - type: "pattern" | "principle" | "warning"
+   - importance: 0.0 a 1.0 (decimal)
+   - level: "Fact" | "Pattern" | "Principle"
+   - source_summary: Breve descripción de la sesión
+3. Guarda la reflexión: `memory_store_reflection(session_id, content_json, agent_name)`
+```
+
+**Ejemplo de reflexión generada por el agente (JSON):**
+
+```json
+{
+  "content": "Implementé OAuth login con 3 providers. Usé PKCE por seguridad. Agregué tests con 94% coverage.",
+  "type": "principle",
+  "importance": 0.85,
+  "level": "Principle",
+  "source_summary": "Sesión de desarrollo de autenticación"
+}
+```
+
+**Guardado:**
+```bash
+funemon_memory_store_reflection(
+  session_id: "uuid",
+  content: '{"content": "...", "type": "principle", "importance": 0.85, "level": "Principle", "source_summary": "..."}',
+  agent_name: "tyrion"
+)
+```
+1. El agente analiza el trabajo realizado usando su propio LLM
 2. Genera reflexión en formato Markdown:
    - Trabajo realizado
    - Decisiones clave
