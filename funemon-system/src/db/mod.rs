@@ -1,8 +1,10 @@
 pub mod connection;
 pub mod memory_ops;
 pub mod models;
+pub mod permissions;
 pub mod reflection_ops;
 pub mod session_ops;
+pub mod teams;
 
 pub use connection::{get_connection, init_database};
 
