@@ -1,4 +1,6 @@
 pub mod connection;
+pub mod feedback;
+pub mod learning;
 pub mod memory_ops;
 pub mod models;
 pub mod permissions;
