@@ -1,7 +1,9 @@
 // Funemon System Library
 // Export modules for use by funemon-ecosystem
 
+pub mod cli;
 pub mod db;
+pub mod mcp;
 
 // Re-export commonly used items
 pub use db::{

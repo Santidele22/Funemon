@@ -1,6 +1,6 @@
 use crate::cli::commands::{Cli, Commands, MemoryCommands, ReflectionCommands, SessionCommands};
 use crate::db::models::{Memories, MemoryType};
-use crate::tui::run_tui;
+// use crate::tui::run_tui; // TODO: uncomment when tui module is added
 use rusqlite::Row;
 use crate::db::{
     cleanup_expired_sessions, delete_memory, delete_reflection, delete_session,
@@ -52,7 +52,8 @@ pub async fn run_cli(cli: Cli) -> Result<(), Box<dyn std::error::Error>> {
         }
 
         Some(Commands::Tui) => {
-            run_tui()?;
+            // run_tui()?; // TODO: uncomment when tui module is added
+            println!("TUI not yet implemented");
         }
         None => {
             println!("🧠 Funemon CLI");
